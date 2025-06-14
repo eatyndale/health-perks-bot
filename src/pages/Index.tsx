@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50">
       {showAuth ? (
         <AuthForm 
           onSuccess={handleAuthSuccess} 
@@ -61,7 +62,7 @@ const Index = () => {
           <div className="max-w-2xl mx-auto text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Ready to Begin?</h1>
             <p className="text-lg text-gray-600 mb-8">
-              Choose how you'd like to start your anxiety reduction journey
+              Choose how you'd like to start your wellness journey
             </p>
             
             <div className="grid gap-6 mb-8">
@@ -69,11 +70,11 @@ const Index = () => {
                 <CardHeader>
                   <CardTitle>Take Assessment First</CardTitle>
                   <CardDescription>
-                    Complete a brief questionnaire to help us understand your anxiety patterns and provide personalized support
+                    Complete a brief questionnaire to help us understand your wellness needs and provide personalized support
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white">
+                  <Button className="w-full bg-gradient-to-r from-[#94c11f] to-lime-500 hover:from-[#7ba018] hover:to-lime-600 text-white">
                     Start Assessment
                   </Button>
                 </CardContent>
@@ -83,11 +84,11 @@ const Index = () => {
                 <CardHeader>
                   <CardTitle>Go Directly to Chat</CardTitle>
                   <CardDescription>
-                    Skip the assessment and start working with our anxiety reduction bot right away
+                    Skip the assessment and start working with our wellness bot right away
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full border-blue-500 text-blue-600 hover:bg-blue-50">
+                  <Button variant="outline" className="w-full border-[#94c11f] text-[#94c11f] hover:bg-green-50">
                     Start Chatting
                   </Button>
                 </CardContent>
@@ -104,29 +105,31 @@ const Index = () => {
           {/* Hero Section */}
           <div className="text-center mb-16 animate-fade-in">
             <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-                <Heart className="w-8 h-8 text-white" />
-              </div>
+              <img 
+                src="/lovable-uploads/dc1752d1-69ff-42d2-b27b-969c6510b75d.png" 
+                alt="HealthPerks" 
+                className="h-16"
+              />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Find Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600"> Inner Peace</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#94c11f] to-lime-500"> Inner Peace</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Your personal anxiety reduction companion using proven EFT tapping techniques to help you find calm and clarity.
+              Your personal wellness companion using proven techniques to help you find calm and clarity in the workplace.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={handleStartJourney}
                 size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-[#94c11f] to-lime-500 hover:from-[#7ba018] hover:to-lime-600 text-white px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
               >
                 Start Your Journey
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-2 border-gray-300 hover:border-blue-500 px-8 py-3 rounded-full transition-all duration-300"
+                className="border-2 border-gray-300 hover:border-[#94c11f] px-8 py-3 rounded-full transition-all duration-300"
               >
                 Learn More
               </Button>
@@ -139,17 +142,17 @@ const Index = () => {
               {
                 icon: Brain,
                 title: "Science-Based",
-                description: "Built on proven EFT tapping techniques and psychological research"
+                description: "Built on proven wellness techniques and psychological research"
               },
               {
                 icon: Heart,
                 title: "Personalized",
-                description: "Tailored approach based on your specific anxiety patterns"
+                description: "Tailored approach based on your specific wellness patterns"
               },
               {
                 icon: Shield,
                 title: "Safe & Secure",
-                description: "Your mental health data is protected with enterprise-grade security"
+                description: "Your wellness data is protected with enterprise-grade security"
               },
               {
                 icon: Users,
@@ -159,7 +162,7 @@ const Index = () => {
             ].map((feature, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/70 backdrop-blur-sm">
                 <CardHeader className="text-center pb-2">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
                   <CardTitle className="text-lg font-semibold text-gray-900">{feature.title}</CardTitle>
@@ -181,27 +184,27 @@ const Index = () => {
                 {
                   step: "1",
                   title: "Complete Assessment",
-                  description: "Answer a few questions to help us understand your anxiety patterns"
+                  description: "Answer a few questions to help us understand your wellness patterns"
                 },
                 {
                   step: "2",
                   title: "Identify Triggers",
-                  description: "Work with our bot to pinpoint what's causing your anxiety"
+                  description: "Work with our bot to pinpoint what's causing your stress"
                 },
                 {
                   step: "3",
-                  title: "Guided Tapping",
-                  description: "Follow personalized EFT tapping sequences to reduce anxiety"
+                  title: "Guided Sessions",
+                  description: "Follow personalized wellness sequences to reduce stress and anxiety"
                 }
               ].map((item, index) => (
                 <div key={index} className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
                     {item.step}
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-gray-600 leading-relaxed">{item.description}</p>
                   {index < 2 && (
-                    <div className="hidden md:block absolute top-6 left-full w-full h-0.5 bg-gradient-to-r from-blue-200 to-green-200 transform -translate-y-1/2"></div>
+                    <div className="hidden md:block absolute top-6 left-full w-full h-0.5 bg-gradient-to-r from-green-200 to-lime-200 transform -translate-y-1/2"></div>
                   )}
                 </div>
               ))}
@@ -209,14 +212,14 @@ const Index = () => {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-12 text-white">
+          <div className="text-center bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-2xl p-12 text-white">
             <h2 className="text-3xl font-bold mb-4">Ready to Start Feeling Better?</h2>
-            <p className="text-xl mb-8 opacity-90">Join thousands who have found relief through our anxiety reduction program.</p>
+            <p className="text-xl mb-8 opacity-90">Join thousands who have found relief through our wellness program.</p>
             <Button 
               onClick={handleStartJourney}
               size="lg" 
               variant="secondary"
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
+              className="bg-white text-[#94c11f] hover:bg-gray-100 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
             >
               Get Started Now
             </Button>

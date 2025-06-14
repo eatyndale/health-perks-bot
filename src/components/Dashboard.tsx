@@ -158,15 +158,16 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">AnxietyBot</span>
+            <img 
+              src="/lovable-uploads/dc1752d1-69ff-42d2-b27b-969c6510b75d.png" 
+              alt="HealthPerks" 
+              className="h-8"
+            />
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Hello, {userProfile.name}</span>
