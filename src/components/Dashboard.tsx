@@ -2,13 +2,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, LogOut, User, Activity } from "lucide-react";
+import { Heart, LogOut, User, Activity, ArrowLeft } from "lucide-react";
 import Questionnaire from "@/components/Questionnaire";
 import AnxietyBot from "@/components/AnxietyBot";
 
 type DashboardState = 'welcome' | 'questionnaire' | 'bot' | 'at-risk';
 
-const Dashboard = () => {
+interface DashboardProps {
+  onSignOut: () => void;
+}
+
+const Dashboard = ({ onSignOut }: DashboardProps) => {
   const [currentState, setCurrentState] = useState<DashboardState>('welcome');
   const [userProfile, setUserProfile] = useState({
     name: "User",
@@ -30,42 +34,78 @@ const Dashboard = () => {
     }
   };
 
+  const handleGetImmediateHelp = () => {
+    // Open crisis hotline
+    window.open('tel:988', '_self');
+  };
+
+  const handleFindTherapist = () => {
+    // Open psychology today therapist finder
+    window.open('https://www.psychologytoday.com/us/therapists', '_blank');
+  };
+
+  const handleBackToWelcome = () => {
+    setCurrentState('welcome');
+  };
+
   const renderCurrentView = () => {
     switch (currentState) {
       case 'questionnaire':
-        return <Questionnaire onComplete={handleQuestionnaireComplete} />;
+        return (
+          <div>
+            <Button variant="ghost" onClick={handleBackToWelcome} className="mb-6">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Questionnaire onComplete={handleQuestionnaireComplete} />
+          </div>
+        );
       case 'bot':
-        return <AnxietyBot />;
+        return (
+          <div>
+            <Button variant="ghost" onClick={handleBackToWelcome} className="mb-6">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <AnxietyBot />
+          </div>
+        );
       case 'at-risk':
         return (
-          <div className="max-w-2xl mx-auto text-center py-12">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Heart className="w-8 h-8 text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">We're Here to Support You</h2>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              Based on your responses, we recommend connecting with a mental health professional. 
-              You're not alone, and help is available.
-            </p>
-            <div className="space-y-4">
-              <Card className="border-l-4 border-l-red-500 bg-red-50">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Crisis Support</h3>
-                  <p className="text-sm text-gray-600 mb-3">If you're in immediate danger, please call emergency services.</p>
-                  <Button className="bg-red-600 hover:bg-red-700 text-white">
-                    Get Immediate Help
-                  </Button>
-                </CardContent>
-              </Card>
-              <Card className="border-l-4 border-l-blue-500 bg-blue-50">
-                <CardContent className="pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-2">Professional Support</h3>
-                  <p className="text-sm text-gray-600 mb-3">Connect with licensed therapists and counselors.</p>
-                  <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
-                    Find a Therapist
-                  </Button>
-                </CardContent>
-              </Card>
+          <div>
+            <Button variant="ghost" onClick={handleBackToWelcome} className="mb-6">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div className="max-w-2xl mx-auto text-center py-12">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Heart className="w-8 h-8 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">We're Here to Support You</h2>
+              <p className="text-gray-600 mb-8 leading-relaxed">
+                Based on your responses, we recommend connecting with a mental health professional. 
+                You're not alone, and help is available.
+              </p>
+              <div className="space-y-4">
+                <Card className="border-l-4 border-l-red-500 bg-red-50">
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold text-gray-900 mb-2">Crisis Support</h3>
+                    <p className="text-sm text-gray-600 mb-3">If you're in immediate danger, please call emergency services or the 988 Suicide & Crisis Lifeline.</p>
+                    <Button onClick={handleGetImmediateHelp} className="bg-red-600 hover:bg-red-700 text-white">
+                      Call 988 Now
+                    </Button>
+                  </CardContent>
+                </Card>
+                <Card className="border-l-4 border-l-blue-500 bg-blue-50">
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold text-gray-900 mb-2">Professional Support</h3>
+                    <p className="text-sm text-gray-600 mb-3">Connect with licensed therapists and counselors in your area.</p>
+                    <Button onClick={handleFindTherapist} variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                      Find a Therapist
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         );
@@ -77,7 +117,7 @@ const Dashboard = () => {
                 Welcome to Your Anxiety Reduction Journey
               </h1>
               <p className="text-xl text-gray-600">
-                Let's start by understanding your current state and goals.
+                Choose how you'd like to begin today.
               </p>
             </div>
             
@@ -97,18 +137,18 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
               
-              <Card className="opacity-50">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentState('bot')}>
                 <CardHeader>
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <Activity className="w-6 h-6 text-gray-400" />
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <Activity className="w-6 h-6 text-green-600" />
                   </div>
-                  <CardTitle className="text-gray-500">Anxiety Reduction Bot</CardTitle>
+                  <CardTitle>Anxiety Reduction Bot</CardTitle>
                   <CardDescription>
-                    Complete the assessment first to unlock personalized anxiety reduction sessions
+                    Start working with our bot to reduce anxiety using EFT tapping techniques
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button disabled className="w-full">Complete Assessment First</Button>
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white">Start Chatting</Button>
                 </CardContent>
               </Card>
             </div>
@@ -130,7 +170,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-600">Hello, {userProfile.name}</span>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={onSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </Button>

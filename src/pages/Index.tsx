@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,15 +8,97 @@ import Dashboard from "@/components/Dashboard";
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [showAssessment, setShowAssessment] = useState(false);
+  const [requiresAuth, setRequiresAuth] = useState(false);
+
+  const handleStartJourney = () => {
+    setShowAssessment(true);
+  };
+
+  const handleStartAssessment = () => {
+    if (!isAuthenticated) {
+      setRequiresAuth(true);
+      setShowAuth(true);
+    } else {
+      // Continue with assessment - this will be handled by Dashboard
+      setIsAuthenticated(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+    setShowAuth(false);
+    setRequiresAuth(false);
+  };
+
+  const handleProceedToChat = () => {
+    if (!isAuthenticated) {
+      setRequiresAuth(true);
+      setShowAuth(true);
+    } else {
+      setIsAuthenticated(true);
+    }
+  };
 
   if (isAuthenticated) {
-    return <Dashboard />;
+    return <Dashboard onSignOut={() => setIsAuthenticated(false)} />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {showAuth ? (
-        <AuthForm onSuccess={() => setIsAuthenticated(true)} onBack={() => setShowAuth(false)} />
+        <AuthForm 
+          onSuccess={handleAuthSuccess} 
+          onBack={() => {
+            setShowAuth(false);
+            setRequiresAuth(false);
+            setShowAssessment(false);
+          }}
+          message={requiresAuth ? "Please sign in to continue with your assessment" : undefined}
+        />
+      ) : showAssessment ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Ready to Begin?</h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Choose how you'd like to start your anxiety reduction journey
+            </p>
+            
+            <div className="grid gap-6 mb-8">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleStartAssessment}>
+                <CardHeader>
+                  <CardTitle>Take Assessment First</CardTitle>
+                  <CardDescription>
+                    Complete a brief questionnaire to help us understand your anxiety patterns and provide personalized support
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white">
+                    Start Assessment
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={handleProceedToChat}>
+                <CardHeader>
+                  <CardTitle>Go Directly to Chat</CardTitle>
+                  <CardDescription>
+                    Skip the assessment and start working with our anxiety reduction bot right away
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" className="w-full border-blue-500 text-blue-600 hover:bg-blue-50">
+                    Start Chatting
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Button variant="ghost" onClick={() => setShowAssessment(false)}>
+              Back to Home
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="container mx-auto px-4 py-8">
           {/* Hero Section */}
@@ -36,7 +117,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                onClick={() => setShowAuth(true)}
+                onClick={handleStartJourney}
                 size="lg" 
                 className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
               >
@@ -132,7 +213,7 @@ const Index = () => {
             <h2 className="text-3xl font-bold mb-4">Ready to Start Feeling Better?</h2>
             <p className="text-xl mb-8 opacity-90">Join thousands who have found relief through our anxiety reduction program.</p>
             <Button 
-              onClick={() => setShowAuth(true)}
+              onClick={handleStartJourney}
               size="lg" 
               variant="secondary"
               className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
