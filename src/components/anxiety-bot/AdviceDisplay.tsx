@@ -18,35 +18,35 @@ const AdviceDisplay = ({ session, onComplete }: AdviceDisplayProps) => {
     if (session.currentIntensity === 0) {
       advice = [
         "🎉 Congratulations! You've successfully reduced your anxiety to zero. This is a wonderful achievement!",
-        "💡 **Maintain Your Progress**: Practice the tapping sequence you just learned whenever similar feelings arise.",
-        "🌱 **Daily Practice**: Consider doing a quick 5-minute tapping session each morning to maintain emotional balance.",
-        "📝 **Keep a Journal**: Write down what triggered this anxiety so you can recognize patterns in the future.",
-        "🤝 **Share Your Success**: Let someone you trust know about this positive step you've taken for your mental health."
+        "💡 Maintain Your Progress: Practice the tapping sequence you just learned whenever similar feelings arise.",
+        "🌱 Daily Practice: Consider doing a quick 5-minute tapping session each morning to maintain emotional balance.",
+        "📝 Keep a Journal: Write down what triggered this anxiety so you can recognize patterns in the future.",
+        "🤝 Share Your Success: Let someone you trust know about this positive step you've taken for your mental health."
       ];
     } else if (improvementPercentage >= 70) {
       advice = [
         `✨ Excellent progress! You've reduced your anxiety by ${improvementPercentage}% (from ${session.initialIntensity} to ${session.currentIntensity}).`,
-        "🔄 **Continue Tapping**: The remaining intensity can likely be reduced with another session later today.",
-        "⏰ **Timing Matters**: Try tapping again in 2-3 hours when you're in a calm environment.",
-        "🧘 **Breathing Practice**: Complement your tapping with deep breathing exercises throughout the day.",
-        "💪 **Build the Habit**: Regular tapping practice makes each session more effective."
+        "🔄 Continue Tapping: The remaining intensity can likely be reduced with another session later today.",
+        "⏰ Timing Matters: Try tapping again in 2-3 hours when you're in a calm environment.",
+        "🧘 Breathing Practice: Complement your tapping with deep breathing exercises throughout the day.",
+        "💪 Build the Habit: Regular tapping practice makes each session more effective."
       ];
     } else if (improvementPercentage >= 40) {
       advice = [
         `👍 Good progress! You've reduced your anxiety by ${improvementPercentage}% (from ${session.initialIntensity} to ${session.currentIntensity}).`,
-        "🎯 **Be Patient**: Sometimes our bodies need time to release deep-seated emotions.",
-        "🔍 **Explore Deeper**: Consider if there are underlying concerns connected to this issue.",
-        "🤲 **Self-Compassion**: Be gentle with yourself - healing is a process, not a destination.",
-        "📞 **Professional Support**: If anxiety persists, consider speaking with a counselor or therapist."
+        "🎯 Be Patient: Sometimes our bodies need time to release deep-seated emotions.",
+        "🔍 Explore Deeper: Consider if there are underlying concerns connected to this issue.",
+        "🤲 Self-Compassion: Be gentle with yourself - healing is a process, not a destination.",
+        "📞 Professional Support: If anxiety persists, consider speaking with a counselor or therapist."
       ];
     } else {
       advice = [
         `🌟 Every step counts! You've made some progress, reducing your anxiety from ${session.initialIntensity} to ${session.currentIntensity}.`,
-        "🔬 **Try Different Approaches**: Sometimes different tapping styles or phrases work better.",
-        "🏥 **Consider Professional Help**: Persistent high anxiety may benefit from professional support.",
-        "👥 **Support Network**: Reach out to friends, family, or support groups.",
-        "📚 **Learn More**: Explore additional EFT resources, books, or guided sessions online.",
-        "⚕️ **Medical Check**: If anxiety is severe or interfering with daily life, consult a healthcare provider."
+        "🔬 Try Different Approaches: Sometimes different tapping styles or phrases work better.",
+        "🏥 Consider Professional Help: Persistent high anxiety may benefit from professional support.",
+        "👥 Support Network: Reach out to friends, family, or support groups.",
+        "📚 Learn More: Explore additional EFT resources, books, or guided sessions online.",
+        "⚕️ Medical Check: If anxiety is severe or interfering with daily life, consult a healthcare provider."
       ];
     }
     
