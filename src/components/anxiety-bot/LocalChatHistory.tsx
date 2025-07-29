@@ -1,15 +1,14 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { History } from "lucide-react";
-import { ChatSession as SupabaseChatSession } from "@/services/supabaseService";
+import { ChatSession } from "./types";
 
-interface ChatHistoryProps {
-  chatHistory: SupabaseChatSession[];
-  onLoadSession: (session: SupabaseChatSession) => void;
+interface LocalChatHistoryProps {
+  chatHistory: ChatSession[];
+  onLoadSession: (session: ChatSession) => void;
 }
 
-const ChatHistory = ({ chatHistory, onLoadSession }: ChatHistoryProps) => {
+const LocalChatHistory = ({ chatHistory, onLoadSession }: LocalChatHistoryProps) => {
   return (
     <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
       <CardHeader>
@@ -34,20 +33,18 @@ const ChatHistory = ({ chatHistory, onLoadSession }: ChatHistoryProps) => {
                 >
                   <CardContent className="p-3">
                     <p className="font-medium text-sm truncate">
-                      Chat Session #{historicalSession.session_number}
+                      {historicalSession.problem}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {new Date(historicalSession.created_at).toLocaleDateString()}
+                      {historicalSession.timestamp.toLocaleDateString()}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs bg-[#94c11f]/20 text-[#7da01a] px-2 py-1 rounded">
-                        {Array.isArray(historicalSession.messages) ? historicalSession.messages.length : 0} messages
+                        {historicalSession.round} rounds
                       </span>
-                      {historicalSession.crisis_detected && (
-                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                          Crisis Support
-                        </span>
-                      )}
+                      <span className="text-xs font-medium">
+                        {historicalSession.initialIntensity} → {historicalSession.currentIntensity}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -60,4 +57,4 @@ const ChatHistory = ({ chatHistory, onLoadSession }: ChatHistoryProps) => {
   );
 };
 
-export default ChatHistory;
+export default LocalChatHistory;

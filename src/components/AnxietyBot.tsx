@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, History } from "lucide-react";
 import ChatInterface from "./anxiety-bot/ChatInterface";
 import SessionProgress from "./anxiety-bot/SessionProgress";
-import ChatHistory from "./anxiety-bot/ChatHistory";
+import LocalChatHistory from "./anxiety-bot/LocalChatHistory";
+import { ChatSession as SupabaseChatSession } from "@/services/supabaseService";
 import AdviceDisplay from "./anxiety-bot/AdviceDisplay";
 import SessionComplete from "./anxiety-bot/SessionComplete";
 import { ChatState, ChatSession, Message } from "./anxiety-bot/types";
@@ -397,7 +398,7 @@ const AnxietyBot = () => {
         {/* Sidebar */}
         <div>
           {showHistory ? (
-            <ChatHistory 
+            <LocalChatHistory 
               chatHistory={chatHistory}
               onLoadSession={loadHistorySession}
             />

@@ -292,6 +292,16 @@ class SupabaseService {
     return { session: data, error };
   }
 
+  async getChatSessions(userId: string): Promise<{ sessions: ChatSession[]; error: any }> {
+    const { data, error } = await supabase
+      .from('chat_sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    return { sessions: data || [], error };
+  }
+
   async updateChatSession(sessionId: string, updates: {
     messages?: any[];
     crisis_detected?: boolean;

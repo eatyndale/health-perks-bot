@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, LogOut, User, Activity, ArrowLeft } from "lucide-react";
 import Questionnaire from "@/components/Questionnaire";
-import AnxietyBot from "@/components/AnxietyBot";
+import AIAnxietyBot from "@/components/AIAnxietyBot";
 
 type DashboardState = 'welcome' | 'questionnaire' | 'bot' | 'at-risk';
 
@@ -97,7 +97,7 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
-            <AnxietyBot />
+            <AIAnxietyBot />
           </div>
         );
       case 'at-risk':
