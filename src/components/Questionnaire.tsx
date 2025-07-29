@@ -1,5 +1,8 @@
 
 import { useState } from "react";
+import { supabaseService } from "@/services/supabaseService";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -34,6 +37,7 @@ const Questionnaire = ({ onComplete }: QuestionnaireProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const handleAnswer = (value: string) => {
     setAnswers(prev => ({
@@ -56,19 +60,52 @@ const Questionnaire = ({ onComplete }: QuestionnaireProps) => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    setTimeout(() => {
-      // Calculate PHQ-9 score
-      const totalScore = Object.values(answers).reduce((sum, answer) => sum + parseInt(answer), 0);
-      console.log("PHQ-9 Score:", totalScore);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
       
-      // Check if at risk (score of 9 indicates moderate depression, suggesting risk)
-      const isAtRisk = totalScore >= 9 || answers[8] === "1" || answers[8] === "2" || answers[8] === "3"; // Question 9 is about self-harm thoughts
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to submit your assessment.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert answers to number array in order
+      const answersArray = Array.from({ length: phq9Questions.length }, (_, i) => 
+        parseInt(answers[i] || "0")
+      );
+
+      const { assessment, error } = await supabaseService.submitAssessment(user.id, answersArray);
       
-      onComplete(isAtRisk);
-    }, 1000);
+      if (error) {
+        throw error;
+      }
+
+      if (assessment) {
+        toast({
+          title: "Assessment completed",
+          description: `Your severity level: ${assessment.severity_level}`,
+        });
+
+        // Check if at risk based on the assessment result
+        const isAtRisk = assessment.needs_crisis_support;
+        onComplete(isAtRisk);
+      }
+    } catch (error) {
+      console.error("Assessment submission error:", error);
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting your assessment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const progress = ((currentQuestion + 1) / phq9Questions.length) * 100;

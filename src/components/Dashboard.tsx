@@ -1,5 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { supabaseService } from "@/services/supabaseService";
+import type { UserProfile } from "@/services/supabaseService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, LogOut, User, Activity, ArrowLeft } from "lucide-react";
@@ -14,18 +17,45 @@ interface DashboardProps {
 
 const Dashboard = ({ onSignOut }: DashboardProps) => {
   const [currentState, setCurrentState] = useState<DashboardState>('welcome');
-  const [userProfile, setUserProfile] = useState({
-    name: "User",
-    questionnairesCompleted: false,
-    isAtRisk: false
-  });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [hasAssessments, setHasAssessments] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Load user profile
+        const { profile, error: profileError } = await supabaseService.getProfile(user.id);
+        if (!profileError && profile) {
+          setUserProfile(profile);
+        }
+
+        // Check for existing assessments
+        const { assessments, error: assessmentsError } = await supabaseService.getAssessments(user.id);
+        if (!assessmentsError && assessments.length > 0) {
+          setHasAssessments(true);
+          // Check if the latest assessment indicates risk
+          const latestAssessment = assessments[0];
+          if (latestAssessment.needs_crisis_support) {
+            setCurrentState('at-risk');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleQuestionnaireComplete = (isAtRisk: boolean) => {
-    setUserProfile(prev => ({
-      ...prev,
-      questionnairesCompleted: true,
-      isAtRisk
-    }));
+    setHasAssessments(true);
     
     if (isAtRisk) {
       setCurrentState('at-risk');
@@ -170,7 +200,7 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
             />
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Hello, {userProfile.name}</span>
+            <span className="text-gray-600">Hello, {userProfile?.first_name || 'User'}</span>
             <Button variant="ghost" size="sm" onClick={onSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

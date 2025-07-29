@@ -1,5 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { supabaseService } from "@/services/supabaseService";
+import type { User, Session } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Brain, Users, Shield } from "lucide-react";
@@ -7,42 +10,72 @@ import AuthForm from "@/components/AuthForm";
 import Dashboard from "@/components/Dashboard";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showAssessment, setShowAssessment] = useState(false);
   const [requiresAuth, setRequiresAuth] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleStartJourney = () => {
     setShowAssessment(true);
   };
 
   const handleStartAssessment = () => {
-    if (!isAuthenticated) {
+    if (!user) {
       setRequiresAuth(true);
       setShowAuth(true);
-    } else {
-      // Continue with assessment - this will be handled by Dashboard
-      setIsAuthenticated(true);
     }
+    // If user is authenticated, Dashboard component will handle assessment
   };
 
   const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
     setShowAuth(false);
     setRequiresAuth(false);
   };
 
   const handleProceedToChat = () => {
-    if (!isAuthenticated) {
+    if (!user) {
       setRequiresAuth(true);
       setShowAuth(true);
-    } else {
-      setIsAuthenticated(true);
     }
+    // If user is authenticated, Dashboard component will handle chat
   };
 
-  if (isAuthenticated) {
-    return <Dashboard onSignOut={() => setIsAuthenticated(false)} />;
+  const handleSignOut = async () => {
+    await supabaseService.signOut();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return <Dashboard onSignOut={handleSignOut} />;
   }
 
   return (

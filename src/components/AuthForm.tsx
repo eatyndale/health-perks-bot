@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Heart } from "lucide-react";
-import { apiClient } from "@/services/apiClient";
+import { supabaseService } from "@/services/supabaseService";
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -27,11 +27,17 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
     setError("");
 
     try {
+      let result;
       if (isLogin) {
-        await apiClient.login({ email, password });
+        result = await supabaseService.signIn(email, password);
       } else {
-        await apiClient.signup({ name, email, password });
+        result = await supabaseService.signUp(name, email, password);
       }
+      
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
