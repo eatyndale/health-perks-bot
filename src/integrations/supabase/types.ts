@@ -14,7 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessments: {
+        Row: {
+          answers: number[]
+          created_at: string
+          id: string
+          needs_crisis_support: boolean
+          recommendation: string
+          severity_level: string
+          total_score: number
+          user_id: string
+        }
+        Insert: {
+          answers: number[]
+          created_at?: string
+          id?: string
+          needs_crisis_support?: boolean
+          recommendation: string
+          severity_level: string
+          total_score: number
+          user_id: string
+        }
+        Update: {
+          answers?: number[]
+          created_at?: string
+          id?: string
+          needs_crisis_support?: boolean
+          recommendation?: string
+          severity_level?: string
+          total_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          crisis_detected: boolean | null
+          crisis_resources: Json | null
+          id: string
+          messages: Json | null
+          session_number: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crisis_detected?: boolean | null
+          crisis_resources?: Json | null
+          id?: string
+          messages?: Json | null
+          session_number: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crisis_detected?: boolean | null
+          crisis_resources?: Json | null
+          id?: string
+          messages?: Json | null
+          session_number?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tapping_sessions: {
+        Row: {
+          body_location: string
+          completed_at: string | null
+          created_at: string
+          feeling: string
+          final_intensity: number | null
+          id: string
+          improvement: number | null
+          initial_intensity: number
+          problem: string
+          reminder_phrases: string[] | null
+          rounds_completed: number | null
+          setup_statements: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_location: string
+          completed_at?: string | null
+          created_at?: string
+          feeling: string
+          final_intensity?: number | null
+          id?: string
+          improvement?: number | null
+          initial_intensity: number
+          problem: string
+          reminder_phrases?: string[] | null
+          rounds_completed?: number | null
+          setup_statements?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_location?: string
+          completed_at?: string | null
+          created_at?: string
+          feeling?: string
+          final_intensity?: number | null
+          id?: string
+          improvement?: number | null
+          initial_intensity?: number
+          problem?: string
+          reminder_phrases?: string[] | null
+          rounds_completed?: number | null
+          setup_statements?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
