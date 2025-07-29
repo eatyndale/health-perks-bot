@@ -306,6 +306,7 @@ class SupabaseService {
     messages?: any[];
     crisis_detected?: boolean;
     crisis_resources?: any;
+    session_name?: string;
   }): Promise<{ session: ChatSession | null; error: any }> {
     const { data, error } = await supabase
       .from('chat_sessions')
@@ -315,6 +316,56 @@ class SupabaseService {
       .single();
 
     return { session: data, error };
+  }
+
+  generateSessionName(emotion: string, problem?: string): string {
+    if (!emotion) return `Session ${new Date().toLocaleDateString()}`;
+    
+    const emotionMap: Record<string, string[]> = {
+      'anxiety': ['Anxious Thoughts', 'Worried Mind', 'Nervous Energy', 'Restless Feelings'],
+      'anxious': ['Anxious Thoughts', 'Worried Mind', 'Nervous Energy', 'Restless Feelings'],
+      'worried': ['Worried Thoughts', 'Concerned Mind', 'Uneasy Feelings', 'Apprehensive Moment'],
+      'stress': ['Stressed Mind', 'Overwhelmed Feelings', 'Pressure Points', 'Tense Moment'],
+      'stressed': ['Stressed Mind', 'Overwhelmed Feelings', 'Pressure Points', 'Tense Moment'],
+      'fear': ['Fearful Thoughts', 'Scared Feelings', 'Frightened Mind', 'Afraid Moment'],
+      'scared': ['Fearful Thoughts', 'Scared Feelings', 'Frightened Mind', 'Afraid Moment'],
+      'overwhelmed': ['Overwhelmed Mind', 'Too Much Feeling', 'Chaotic Thoughts', 'Overloaded Moment'],
+      'panic': ['Panic Attack', 'Racing Heart', 'Intense Fear', 'Overwhelming Panic'],
+      'sad': ['Sad Feelings', 'Heavy Heart', 'Sorrowful Mind', 'Down Moment'],
+      'angry': ['Angry Feelings', 'Frustrated Mind', 'Mad Moment', 'Irritated State'],
+      'embarrassed': ['Embarrassed Feelings', 'Shame Moment', 'Self-Conscious Mind', 'Awkward Feeling'],
+      'guilt': ['Guilty Feelings', 'Remorseful Mind', 'Self-Blame Moment', 'Regret Session'],
+      'health': ['Health Worries', 'Body Concerns', 'Medical Anxiety', 'Health Fear'],
+      'work': ['Work Stress', 'Job Anxiety', 'Career Worries', 'Professional Pressure'],
+      'parenting': ['Parenting Concerns', 'Mom Guilt', 'Dad Worries', 'Child Anxiety'],
+      'relationship': ['Relationship Stress', 'Love Worries', 'Partner Concerns', 'Connection Issues']
+    };
+
+    const baseEmotion = emotion.toLowerCase();
+    let sessionNames = emotionMap[baseEmotion];
+    
+    // Check for problem-specific names
+    if (problem) {
+      const problemLower = problem.toLowerCase();
+      if (problemLower.includes('health') || problemLower.includes('body') || problemLower.includes('sick')) {
+        sessionNames = emotionMap['health'];
+      } else if (problemLower.includes('work') || problemLower.includes('job') || problemLower.includes('boss')) {
+        sessionNames = emotionMap['work'];
+      } else if (problemLower.includes('child') || problemLower.includes('parent') || problemLower.includes('mum') || problemLower.includes('mom')) {
+        sessionNames = emotionMap['parenting'];
+      } else if (problemLower.includes('relationship') || problemLower.includes('partner') || problemLower.includes('love')) {
+        sessionNames = emotionMap['relationship'];
+      }
+    }
+
+    // Fallback to generic anxiety names if no match
+    if (!sessionNames) {
+      sessionNames = emotionMap['anxiety'];
+    }
+
+    const randomName = sessionNames[Math.floor(Math.random() * sessionNames.length)];
+    const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${randomName} - ${date}`;
   }
 
   // Progress tracking

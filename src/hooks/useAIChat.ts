@@ -145,9 +145,19 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
       setConversationHistory(finalMessages);
 
       // Update chat session in database
+      // Generate session name based on emotions if we have session context
+      let sessionName;
+      if (updatedContext.feeling || updatedContext.problem) {
+        sessionName = supabaseService.generateSessionName(
+          updatedContext.feeling || 'anxiety', 
+          updatedContext.problem
+        );
+      }
+      
       await supabaseService.updateChatSession(currentChatSession, {
         messages: finalMessages,
-        crisis_detected: data.crisisDetected || false
+        crisis_detected: data.crisisDetected || false,
+        session_name: sessionName
       });
 
       // Handle crisis detection
