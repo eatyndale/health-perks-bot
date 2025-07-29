@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Heart } from "lucide-react";
+import { apiClient } from "@/services/apiClient";
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -17,11 +18,26 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual authentication with Supabase
-    console.log("Auth form submitted:", { email, password, name, isLogin });
-    onSuccess();
+    setLoading(true);
+    setError("");
+
+    try {
+      if (isLogin) {
+        await apiClient.login({ email, password });
+      } else {
+        await apiClient.signup({ name, email, password });
+      }
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,11 +107,17 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
                   className="border-gray-300 focus:border-blue-500"
                 />
               </div>
+              {error && (
+                <div className="text-red-600 text-sm text-center p-2 bg-red-50 rounded">
+                  {error}
+                </div>
+              )}
               <Button 
                 type="submit" 
+                disabled={loading}
                 className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white"
               >
-                {isLogin ? "Sign In" : "Create Account"}
+                {loading ? "..." : (isLogin ? "Sign In" : "Create Account")}
               </Button>
             </form>
             <div className="mt-6 text-center">

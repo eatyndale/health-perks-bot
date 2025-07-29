@@ -7,6 +7,7 @@ import ChatHistory from "./anxiety-bot/ChatHistory";
 import AdviceDisplay from "./anxiety-bot/AdviceDisplay";
 import SessionComplete from "./anxiety-bot/SessionComplete";
 import { ChatState, ChatSession, Message } from "./anxiety-bot/types";
+import { apiClient } from "@/services/apiClient";
 
 const tappingPoints = [
   { name: "Top of Head", key: "top-head" },
@@ -42,8 +43,15 @@ const AnxietyBot = () => {
   const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedSetupStatement, setSelectedSetupStatement] = useState<number | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<number>(0);
   
   useEffect(() => {
+    // Initialize API token if available
+    const token = apiClient.getToken();
+    if (token) {
+      apiClient.setToken(token);
+    }
+    
     // Load chat history from localStorage
     const savedHistory = localStorage.getItem('anxietyBot-chatHistory');
     if (savedHistory) {
@@ -128,12 +136,34 @@ const AnxietyBot = () => {
     ];
   };
 
-  const handleProblemSubmit = () => {
+  const handleProblemSubmit = async () => {
     if (!currentInput.trim()) return;
     
     addMessage('user', currentInput);
     setSession(prev => ({ ...prev, problem: currentInput }));
-    addMessage('bot', "Thank you for sharing that. How does this situation make you feel? Please describe the emotion you're experiencing (e.g., anxious, worried, stressed, angry).");
+    
+    try {
+      // Send message to chat API for processing
+      const response = await apiClient.sendMessage({
+        content: currentInput,
+        session_id: currentSessionId
+      });
+      
+      // Handle crisis detection
+      if (response.crisis_detected) {
+        addMessage('bot', response.response);
+        if (response.crisis_resources) {
+          addMessage('system', 'crisis-resources');
+        }
+        return;
+      }
+      
+      addMessage('bot', response.response || "Thank you for sharing that. How does this situation make you feel? Please describe the emotion you're experiencing (e.g., anxious, worried, stressed, angry).");
+      setCurrentSessionId(response.session_id);
+    } catch (error) {
+      addMessage('bot', "Thank you for sharing that. How does this situation make you feel? Please describe the emotion you're experiencing (e.g., anxious, worried, stressed, angry).");
+    }
+    
     setChatState('gathering-feeling');
     setCurrentInput("");
   };
@@ -158,26 +188,51 @@ const AnxietyBot = () => {
     setCurrentInput("");
   };
 
-  const handleIntensitySubmit = () => {
+  const handleIntensitySubmit = async () => {
     const intensity = currentIntensity[0];
     addMessage('user', `${intensity}/10`);
     
-    const statements = generateSetupStatements(session.problem, session.feeling, session.bodyLocation);
-    const phrases = generateReminderPhrases(session.problem, session.feeling, session.bodyLocation);
-    
-    setSession(prev => ({
-      ...prev,
-      initialIntensity: intensity,
-      currentIntensity: intensity,
-      round: 1,
-      setupStatements: statements,
-      reminderPhrases: phrases
-    }));
-    
-    addMessage('bot', `I understand you're feeling ${session.feeling} in your ${session.bodyLocation} at a ${intensity}/10 intensity. Let's work through this together with some tapping.`);
-    addMessage('system', 'setup-statements');
-    
-    setChatState('creating-statements');
+    try {
+      // Generate EFT script using the API
+      const eftResponse = await apiClient.generateEFTScript({
+        problem: session.problem,
+        feeling: session.feeling,
+        body_location: session.bodyLocation,
+        intensity: intensity
+      });
+      
+      setSession(prev => ({
+        ...prev,
+        initialIntensity: intensity,
+        currentIntensity: intensity,
+        round: 1,
+        setupStatements: eftResponse.setup_statements,
+        reminderPhrases: eftResponse.reminder_phrases
+      }));
+      
+      addMessage('bot', `I understand you're feeling ${session.feeling} in your ${session.bodyLocation} at a ${intensity}/10 intensity. Let's work through this together with some tapping.`);
+      addMessage('system', 'setup-statements');
+      
+      setChatState('creating-statements');
+    } catch (error) {
+      // Fallback to local generation if API fails
+      const statements = generateSetupStatements(session.problem, session.feeling, session.bodyLocation);
+      const phrases = generateReminderPhrases(session.problem, session.feeling, session.bodyLocation);
+      
+      setSession(prev => ({
+        ...prev,
+        initialIntensity: intensity,
+        currentIntensity: intensity,
+        round: 1,
+        setupStatements: statements,
+        reminderPhrases: phrases
+      }));
+      
+      addMessage('bot', `I understand you're feeling ${session.feeling} in your ${session.bodyLocation} at a ${intensity}/10 intensity. Let's work through this together with some tapping.`);
+      addMessage('system', 'setup-statements');
+      
+      setChatState('creating-statements');
+    }
   };
 
   const handleSetupStatementSelect = (index: number) => {
@@ -202,11 +257,23 @@ const AnxietyBot = () => {
     }
   };
 
-  const handlePostTappingIntensity = () => {
+  const handlePostTappingIntensity = async () => {
     const newIntensity = currentIntensity[0];
     addMessage('user', `${newIntensity}/10`);
     
     setSession(prev => ({ ...prev, currentIntensity: newIntensity }));
+    
+    // Submit EFT feedback to the API
+    try {
+      await apiClient.submitEFTFeedback({
+        session_id: currentSessionId,
+        initial_intensity: session.initialIntensity,
+        final_intensity: newIntensity,
+        rounds_completed: session.round
+      });
+    } catch (error) {
+      console.log('Failed to submit EFT feedback:', error);
+    }
     
     if (newIntensity === 0) {
       addMessage('bot', "🎉 Wonderful! You've successfully reduced your anxiety to zero. Let me share some personalized advice to help you maintain this progress:");
@@ -217,12 +284,30 @@ const AnxietyBot = () => {
       addMessage('system', 'advice');
       setChatState('advice');
     } else {
-      const newStatements = generateSetupStatements(session.problem, session.feeling, session.bodyLocation, true);
-      setSession(prev => ({ 
-        ...prev, 
-        round: prev.round + 1,
-        setupStatements: newStatements 
-      }));
+      try {
+        // Generate new EFT script for subsequent rounds
+        const eftResponse = await apiClient.generateEFTScript({
+          problem: session.problem,
+          feeling: session.feeling,
+          body_location: session.bodyLocation,
+          intensity: newIntensity
+        });
+        
+        setSession(prev => ({ 
+          ...prev, 
+          round: prev.round + 1,
+          setupStatements: eftResponse.setup_statements,
+          reminderPhrases: eftResponse.reminder_phrases
+        }));
+      } catch (error) {
+        // Fallback to local generation
+        const newStatements = generateSetupStatements(session.problem, session.feeling, session.bodyLocation, true);
+        setSession(prev => ({ 
+          ...prev, 
+          round: prev.round + 1,
+          setupStatements: newStatements 
+        }));
+      }
       
       addMessage('bot', `Great progress! Your intensity has reduced from ${session.initialIntensity} to ${newIntensity}. Let's do another round of tapping with updated statements:`);
       addMessage('system', 'setup-statements');
