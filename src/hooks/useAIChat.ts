@@ -29,8 +29,13 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
 
   useEffect(() => {
     loadUserProfile();
-    initializeChatSession();
   }, []);
+
+  useEffect(() => {
+    if (userProfile) {
+      initializeChatSession();
+    }
+  }, [userProfile]);
 
   const loadUserProfile = async () => {
     try {
@@ -51,21 +56,39 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
         const { session } = await supabaseService.getOrCreateChatSession(user.id);
         if (session) {
           setCurrentChatSession(session.id);
-          // Add initial greeting message
-          const greetingMessage: Message = {
-            id: `greeting-${Date.now()}`,
-            type: 'bot',
-            content: `Hello ${userProfile?.first_name || 'there'}! I'm here to help you work through anxiety using EFT tapping techniques. What would you like to work on today?`,
-            timestamp: new Date(),
-            sessionId: session.id
-          };
-          setMessages([greetingMessage]);
-          setConversationHistory([greetingMessage]);
+          
+          // Load existing messages if any
+          if (session.messages && Array.isArray(session.messages) && session.messages.length > 0) {
+            const existingMessages = session.messages.map((msg: any, index: number) => ({
+              id: msg.id || `msg-${index}`,
+              type: msg.type,
+              content: msg.content,
+              timestamp: new Date(msg.timestamp),
+              sessionId: session.id
+            }));
+            setMessages(existingMessages);
+            setConversationHistory(existingMessages);
+          } else {
+            // Only add greeting if no existing messages
+            createInitialGreeting(session.id);
+          }
         }
       }
     } catch (error) {
       console.error('Error initializing chat session:', error);
     }
+  };
+
+  const createInitialGreeting = (sessionId: string) => {
+    const greetingMessage: Message = {
+      id: `greeting-${Date.now()}`,
+      type: 'bot',
+      content: `Hello ${userProfile?.first_name || 'there'}! I'm here to help you work through anxiety using EFT tapping techniques. What would you like to work on today?`,
+      timestamp: new Date(),
+      sessionId: sessionId
+    };
+    setMessages([greetingMessage]);
+    setConversationHistory([greetingMessage]);
   };
 
   const sendMessage = useCallback(async (
@@ -172,15 +195,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
           setSessionContext({});
           
           // Add initial greeting
-          const greetingMessage: Message = {
-            id: `greeting-${Date.now()}`,
-            type: 'bot',
-            content: `Hello ${userProfile?.first_name || 'there'}! I'm here to help you work through anxiety using EFT tapping techniques. What would you like to work on today?`,
-            timestamp: new Date(),
-            sessionId: session.id
-          };
-          setMessages([greetingMessage]);
-          setConversationHistory([greetingMessage]);
+          createInitialGreeting(session.id);
         }
       }
     } catch (error) {

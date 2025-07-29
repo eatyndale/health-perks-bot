@@ -53,6 +53,12 @@ const AIAnxietyBot = () => {
     loadChatHistory();
   }, []);
 
+  useEffect(() => {
+    if (showHistory) {
+      loadChatHistory();
+    }
+  }, [showHistory]);
+
   const loadChatHistory = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
