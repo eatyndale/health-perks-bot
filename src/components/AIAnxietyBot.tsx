@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, History, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { useAIChat } from "@/hooks/useAIChat";
 import { ChatState, QuestionnaireSession } from "./anxiety-bot/types";
 import { supabaseService } from "@/services/supabaseService";
@@ -12,21 +9,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import ChatHistory from "./anxiety-bot/ChatHistory";
 import SessionProgress from "./anxiety-bot/SessionProgress";
-import Questionnaire from "./anxiety-bot/Questionnaire";
 import IntensitySlider from "./anxiety-bot/IntensitySlider";
 import TappingGuide from "./anxiety-bot/TappingGuide";
 import CrisisSupport from "./anxiety-bot/CrisisSupport";
+import ChatMessage from "./anxiety-bot/ChatMessage";
+import LoadingIndicator from "./anxiety-bot/LoadingIndicator";
+import SetupStatements from "./anxiety-bot/SetupStatements";
+import ChatInput from "./anxiety-bot/ChatInput";
+import SessionActions from "./anxiety-bot/SessionActions";
+import ChatHeader from "./anxiety-bot/ChatHeader";
+import QuestionnaireView from "./anxiety-bot/QuestionnaireView";
 
-const tappingPoints = [
-  { name: "Top of Head", key: "top-head" },
-  { name: "Start of Eyebrow", key: "eyebrow" },
-  { name: "Outer Eye", key: "outer-eye" },
-  { name: "Under Eye", key: "under-eye" },
-  { name: "Under Nose", key: "under-nose" },
-  { name: "Chin", key: "chin" },
-  { name: "Collarbone", key: "collarbone" },
-  { name: "Under Arm", key: "under-arm" }
-];
 
 const AIAnxietyBot = () => {
   const { toast } = useToast();
@@ -160,25 +153,6 @@ const AIAnxietyBot = () => {
     setChatState('post-tapping');
   };
 
-  const renderSetupStatements = () => {
-    if (!sessionContext.setupStatements?.length) return null;
-
-    return (
-      <div className="space-y-3 mt-4">
-        <p className="font-medium text-sm">Choose your setup statement:</p>
-        {sessionContext.setupStatements.map((statement, index) => (
-          <Button
-            key={index}
-            variant={selectedSetupStatement === index ? "default" : "outline"}
-            className="w-full text-left h-auto p-4 whitespace-normal"
-            onClick={() => handleSetupStatementSelect(index)}
-          >
-            {statement}
-          </Button>
-        ))}
-      </div>
-    );
-  };
 
 
   const renderInput = () => {
@@ -206,7 +180,13 @@ const AIAnxietyBot = () => {
     }
 
     if (chatState === 'creating-statements') {
-      return renderSetupStatements();
+      return (
+        <SetupStatements
+          statements={sessionContext.setupStatements || []}
+          selectedIndex={selectedSetupStatement}
+          onSelect={handleSetupStatementSelect}
+        />
+      );
     }
 
     if (chatState === 'tapping') {
@@ -221,85 +201,22 @@ const AIAnxietyBot = () => {
 
     if (chatState === 'advice' || chatState === 'complete') {
       return (
-        <div className="space-y-2">
-          <Button onClick={startNewSession} className="w-full">
-            Start New Session
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowHistory(true)} 
-            className="w-full"
-          >
-            View Chat History
-          </Button>
-        </div>
-      );
-    }
-
-    if (chatState === 'gathering-feeling') {
-      return (
-        <div className="flex space-x-2">
-          <Input
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="e.g., anxious, sad, angry, frustrated..."
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isLoading || !currentInput.trim()}
-            size="sm"
-            className="self-end"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-      );
-    }
-
-    if (chatState === 'gathering-location') {
-      return (
-        <div className="flex space-x-2">
-          <Input
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="e.g., chest, stomach, shoulders, throat..."
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isLoading || !currentInput.trim()}
-            size="sm"
-            className="self-end"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
+        <SessionActions 
+          onStartNewSession={startNewSession}
+          onShowHistory={() => setShowHistory(true)}
+        />
       );
     }
 
     return (
-      <div className="flex space-x-2">
-        <Textarea
-          value={currentInput}
-          onChange={(e) => setCurrentInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={chatState === 'initial' ? "Tell me what's bothering you..." : "Type your response..."}
-          className="flex-1"
-          rows={2}
-          disabled={isLoading}
-        />
-        <Button 
-          onClick={handleSubmit} 
-          disabled={isLoading || !currentInput.trim()}
-          size="sm"
-          className="self-end"
-        >
-          <Send className="w-4 h-4" />
-        </Button>
-      </div>
+      <ChatInput
+        chatState={chatState}
+        currentInput={currentInput}
+        onInputChange={setCurrentInput}
+        onSubmit={handleSubmit}
+        onKeyPress={handleKeyPress}
+        isLoading={isLoading}
+      />
     );
   };
 
@@ -313,53 +230,22 @@ const AIAnxietyBot = () => {
 
   if (chatState === 'questionnaire') {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Anxiety Assessment</h1>
-          <p className="text-gray-600">Let's start by understanding your current mental health state</p>
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              onClick={handleSkipAssessment}
-              className="mr-2"
-            >
-              Skip Assessment
-            </Button>
-          </div>
-        </div>
-        <Questionnaire onComplete={handleQuestionnaireComplete} />
-      </div>
+      <QuestionnaireView 
+        onComplete={handleQuestionnaireComplete}
+        onSkip={handleSkipAssessment}
+      />
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Anxiety Support Chat</h1>
-          {questionnaireSession && (
-            <p className="text-sm text-gray-600">
-              Assessment: {questionnaireSession.severity} (Score: {questionnaireSession.totalScore}/27)
-            </p>
-          )}
-          {/* Debug display */}
-          <p className="text-xs text-red-500">Debug: Current state = {chatState}</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center"
-          >
-            <History className="w-4 h-4 mr-2" />
-            Chat History
-          </Button>
-          <Button variant="outline" onClick={startNewSession} className="flex items-center">
-            <RotateCcw className="w-4 h-4 mr-2" />
-            New Session
-          </Button>
-        </div>
-      </div>
+      <ChatHeader 
+        questionnaireSession={questionnaireSession}
+        chatState={chatState}
+        showHistory={showHistory}
+        onToggleHistory={() => setShowHistory(!showHistory)}
+        onStartNewSession={startNewSession}
+      />
 
       <div className="grid lg:grid-cols-4 gap-6">
         {/* Chat Interface */}
@@ -372,34 +258,9 @@ const AIAnxietyBot = () => {
               <ScrollArea className="h-[500px] mb-4">
                 <div className="space-y-4">
                   {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${
-                        message.type === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          message.type === 'user'
-                            ? 'bg-primary text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-                    </div>
+                    <ChatMessage key={message.id} message={message} />
                   ))}
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 text-gray-900 p-3 rounded-lg">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {isLoading && <LoadingIndicator />}
                 </div>
               </ScrollArea>
               
