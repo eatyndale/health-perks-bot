@@ -163,7 +163,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      validate_assessment_answers: {
+        Args: { answers: number[] }
+        Returns: boolean
+      }
+      validate_intensity: {
+        Args: { intensity: number }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
