@@ -21,6 +21,25 @@ interface UseAIChatProps {
   onCrisisDetected?: () => void;
 }
 
+// Helper function to extract setup statements from AI response
+const extractSetupStatements = (response: string): string[] => {
+  const statements: string[] = [];
+  const lines = response.split('\n');
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('"Even though') && trimmed.endsWith('"')) {
+      // Remove quotes and add to statements
+      statements.push(trimmed.slice(1, -1));
+    } else if (trimmed.startsWith('Even though')) {
+      // Direct statement without quotes
+      statements.push(trimmed);
+    }
+  }
+  
+  return statements;
+};
+
 export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: UseAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -147,6 +166,16 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
       setMessages(finalMessages);
       setConversationHistory(finalMessages);
 
+      // Extract setup statements if we're in creating-statements state
+      if (chatState === 'creating-statements' || data.response.includes('Even though')) {
+        const setupStatements = extractSetupStatements(data.response);
+        if (setupStatements.length > 0) {
+          updatedContext.setupStatements = setupStatements;
+          setSessionContext(updatedContext);
+          onSessionUpdate(updatedContext);
+        }
+      }
+
       // Handle state transitions based on AI response and current state
       const nextState = determineNextState(chatState, data.response);
       if (nextState && nextState !== chatState) {
@@ -195,23 +224,60 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
   }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate, onCrisisDetected]);
 
   const determineNextState = (currentState: ChatState, aiResponse: string): ChatState | null => {
-    // Determine next state based on AI response content
+    // Determine next state based on AI response content and current state
     const response = aiResponse.toLowerCase();
     
+    // State-based transitions to ensure proper flow
+    switch (currentState) {
+      case 'initial':
+        if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
+          return 'gathering-feeling';
+        }
+        break;
+      case 'gathering-feeling':
+        if (response.includes('where do you feel it') || response.includes('feel it in your body')) {
+          return 'gathering-location';
+        }
+        break;
+      case 'gathering-location':
+        if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
+          return 'gathering-intensity';
+        }
+        break;
+      case 'gathering-intensity':
+        // After intensity rating, always go to creating statements
+        return 'creating-statements';
+      case 'creating-statements':
+        // After setup statements are created, go to tapping
+        if (response.includes('even though') || response.includes('setup statement')) {
+          return 'tapping';
+        }
+        break;
+      case 'tapping':
+        // After tapping is complete, go to post-tapping
+        return 'post-tapping';
+      case 'post-tapping':
+        if (response.includes('amazing work') || response.includes('meditation library')) {
+          return 'advice';
+        }
+        // If intensity is still high, create new statements
+        if (sessionContext.currentIntensity && sessionContext.currentIntensity > 3) {
+          return 'creating-statements';
+        }
+        break;
+      case 'advice':
+        return 'complete';
+    }
+    
+    // Fallback pattern matching for edge cases
     if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
       return 'gathering-feeling';
     }
-    if (response.includes('where do you feel it') || response.includes('feel that feeling in your body')) {
+    if (response.includes('where do you feel it') || response.includes('feel it in your body')) {
       return 'gathering-location';
     }
-    if (response.includes('rate') && response.includes('scale') && response.includes('0') && response.includes('10')) {
+    if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
       return 'gathering-intensity';
-    }
-    if (response.includes('setup statement') || response.includes('even though')) {
-      return 'creating-statements';
-    }
-    if (response.includes('let\'s begin the tapping') || response.includes('tapping sequence')) {
-      return 'tapping';
     }
     if (response.includes('how do you feel now') || response.includes('what\'s your intensity now')) {
       return 'post-tapping';

@@ -26,8 +26,6 @@ const ChatHeader = ({
             Assessment: {questionnaireSession.severity} (Score: {questionnaireSession.totalScore}/27)
           </p>
         )}
-        {/* Debug display */}
-        <p className="text-xs text-red-500">Debug: Current state = {chatState}</p>
       </div>
       <div className="flex space-x-2">
         <Button 
