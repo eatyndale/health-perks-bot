@@ -40,13 +40,24 @@ const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
       description: "Mental health and substance abuse treatment referral",
       icon: <Phone className="w-5 h-5 text-green-500" />,
       priority: "support"
+    },
+    {
+      name: "Find a Therapist (UK)",
+      number: "https://www.psychotherapy.org.uk/",
+      description: "Directory of qualified therapists",
+      icon: <Phone className="w-5 h-5 text-purple-500" />,
+      priority: "support",
+      isUrl: true
     }
   ];
 
-  const handleCall = (number: string, name: string, isText?: boolean) => {
+  const handleCall = (number: string, name: string, isText?: boolean, isUrl?: boolean) => {
     setCallInitiated(name);
     
-    if (isText) {
+    if (isUrl) {
+      // For URLs, open in new tab
+      window.open(number, '_blank');
+    } else if (isText) {
       // For text services, open SMS app
       window.location.href = `sms:${number}?body=HOME`;
     } else {
@@ -95,7 +106,7 @@ const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
                     </div>
                   </div>
                   <Button
-                    onClick={() => handleCall(contact.number, contact.name, contact.isText)}
+                    onClick={() => handleCall(contact.number, contact.name, contact.isText, contact.isUrl)}
                     className={`ml-4 ${
                       contact.priority === 'immediate' ? 'bg-red-600 hover:bg-red-700' :
                       contact.priority === 'crisis' ? 'bg-orange-600 hover:bg-orange-700' :
@@ -108,7 +119,7 @@ const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
                     ) : (
                       <>
                         {contact.isText ? <MessageCircle className="w-4 h-4 mr-2" /> : <Phone className="w-4 h-4 mr-2" />}
-                        {contact.isText ? "Text" : "Call"} Now
+                        {contact.isUrl ? "Visit" : contact.isText ? "Text" : "Call"} Now
                       </>
                     )}
                   </Button>
