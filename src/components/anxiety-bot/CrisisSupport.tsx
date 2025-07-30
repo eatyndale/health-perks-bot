@@ -69,7 +69,7 @@ const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-500" />
             <AlertDescription className="text-red-700">
-              You are not alone. Help is available 24/7. Click any number below to get immediate support.
+              <strong>You are not alone.</strong> Help is available 24/7. If this was triggered by mistake, you can continue your session below. Otherwise, please reach out for immediate support.
             </AlertDescription>
           </Alert>
         </CardHeader>
@@ -125,11 +125,24 @@ const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
             </AlertDescription>
           </Alert>
 
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center gap-4 mt-6">
             {onClose && (
-              <Button variant="outline" onClick={onClose} className="px-8">
-                I'm Safe - Continue Session
-              </Button>
+              <>
+                <Button variant="outline" onClick={onClose} className="px-6">
+                  This was triggered by mistake - Continue Session
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => {
+                    // Log that user acknowledged but chose to continue
+                    console.log('User acknowledged crisis resources and chose to continue');
+                    onClose();
+                  }}
+                  className="px-6"
+                >
+                  I understand - Continue Session
+                </Button>
+              </>
             )}
           </div>
         </CardContent>

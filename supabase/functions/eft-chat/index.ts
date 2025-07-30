@@ -238,15 +238,87 @@ CRITICAL RULES:
 
     const aiResponse = data.choices[0].message.content;
 
-    // Detect crisis keywords in user message
-    const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'hurt myself', 'die', 'death', 'want to die'];
+    // Enhanced crisis detection with expanded keywords and phrases
+    const crisisKeywords = [
+      // Immediate danger keywords
+      'suicide', 'kill myself', 'end it all', 'hurt myself', 'die', 'death', 'want to die',
+      'self harm', 'cutting', 'overdose', 'jump off', 'hang myself', 'pills',
+      
+      // Severe emotional distress
+      'better off dead', 'no point living', 'can\'t go on', 'no way out', 'give up',
+      'hopeless', 'worthless', 'pointless', 'no hope', 'escape this pain',
+      
+      // Crisis phrases
+      'want to hurt myself', 'thoughts of dying', 'end the pain', 'make it stop',
+      'can\'t take it anymore', 'life isn\'t worth', 'world without me',
+      'planning to hurt', 'thinking about suicide'
+    ];
+    
+    const crisisPhrases = [
+      'want to hurt myself',
+      'thoughts of dying', 
+      'end the pain',
+      'make it stop',
+      'can\'t take it anymore',
+      'life isn\'t worth',
+      'world without me',
+      'planning to hurt',
+      'thinking about suicide',
+      'no point in living',
+      'better off dead',
+      'can\'t go on',
+      'no way out'
+    ];
+
+    const messageText = sanitizedMessage.toLowerCase();
+    
+    // Check for individual keywords
     const containsCrisisKeyword = crisisKeywords.some(keyword => 
-      sanitizedMessage.toLowerCase().includes(keyword)
+      messageText.includes(keyword.toLowerCase())
+    );
+    
+    // Check for crisis phrases
+    const containsCrisisPhrase = crisisPhrases.some(phrase => 
+      messageText.includes(phrase.toLowerCase())
+    );
+    
+    // Context-aware detection for concerning word combinations
+    const concerningCombinations = [
+      ['hurt', 'myself'],
+      ['end', 'life'],
+      ['kill', 'me'],
+      ['want', 'die'],
+      ['can\'t', 'anymore'],
+      ['no', 'hope'],
+      ['give', 'up'],
+      ['escape', 'pain']
+    ];
+    
+    const containsConcerningCombination = concerningCombinations.some(([word1, word2]) => 
+      messageText.includes(word1) && messageText.includes(word2)
     );
 
+    const crisisDetected = containsCrisisKeyword || containsCrisisPhrase || containsConcerningCombination;
+    
+    // Log crisis detection for monitoring (in production, use proper logging service)
+    if (crisisDetected) {
+      console.log('Crisis detected in message:', {
+        clientId: clientId.substring(0, 8), // Partial ID for privacy
+        timestamp: new Date().toISOString(),
+        triggerType: containsCrisisKeyword ? 'keyword' : containsCrisisPhrase ? 'phrase' : 'combination',
+        messageLength: sanitizedMessage.length
+      });
+    }
+
+    // If crisis detected, modify AI response to be supportive and redirect to resources
+    let finalResponse = aiResponse;
+    if (crisisDetected) {
+      finalResponse = `${userProfile?.first_name || 'Friend'}, I can see you're going through a really difficult time right now. Your safety and wellbeing are the most important thing. I want to connect you with people who are specially trained to help in these situations. Please know that you're not alone, and there are people who care about you and want to help. Let me show you some immediate support resources.`;
+    }
+
     return new Response(JSON.stringify({ 
-      response: aiResponse,
-      crisisDetected: containsCrisisKeyword 
+      response: finalResponse,
+      crisisDetected: crisisDetected 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
