@@ -94,28 +94,28 @@ CURRENT STAGE GUIDANCE:`;
         break;
       case 'creating-statements':
         systemPrompt += `
-- For high intensity (>7), use general statements:
-  "Even though I feel this [emotion] right now, I'd like to be at peace"
-  "Even though I'm feeling [emotion], I know I'm OK"
-  "Even though I am feeling [emotion], I would like to become calm and relaxed"
-- For specific issues, use their exact words:
-  "Even though I feel this [emotion] in my [body location] connected to [their issue], I'd like to let it go and feel at peace"
-  Include their specific concerns and use their language`;
+- Create EXACTLY 3 setup statements using their words for [emotion], [body location], and [problem]
+- Use varied language patterns:
+  "Even though I feel this [emotion] in my [body location] because [problem], I'd like to be at peace"
+  "I feel [emotion] in my [body location], [problem context], but I'd like to relax now"  
+  "This [emotion] in my [body location], [problem], but I want to let it go"
+- ONLY provide the 3 setup statements, nothing else
+- DO NOT mention tapping points or sequences - that comes next
+- End with: "Now let's do the tapping sequence. Please tap along with the visual guide."`;
         break;
       case 'tapping':
         systemPrompt += `
-- Simply acknowledge that tapping is starting: "Great ${userName}! Let's begin the tapping sequence now. Follow along with the visual guide."
-- The system will automatically handle the tapping sequence with the reminder phrases
-- Do NOT guide through individual tapping points - the interface handles this
-- Just provide encouragement and wait for the tapping sequence to complete`;
+- DO NOT provide any tapping instructions - the visual interface handles this
+- DO NOT list tapping points or reminder phrases
+- Simply say: "Great! The tapping sequence will guide you through each point. Follow along with the visual animation."
+- Keep response very short - the visual guide does the work`;
         break;
       case 'post-tapping':
         systemPrompt += `
-- Celebrate progress: "That's amazing ${userName}! You're doing SO well..."
-- If still above 3: "What is that remaining [number] about specifically?"
-- If 1-3: Add positive affirmations in next round
-- If 0: "AMAZING ${userName}! You have done amazing work here today"
-- Determine if more rounds needed or if ready for advice`;
+- Say: "Take a deep breath in and breathe out, ${userName}. How are you feeling now?"
+- Ask them to re-rate their intensity: "Can you rate that feeling again on the scale of 0-10?"
+- DO NOT create new statements yet - wait for their rating first
+- Keep response focused only on getting the new intensity rating`;
         break;
       case 'advice':
         systemPrompt += `
@@ -127,7 +127,14 @@ CURRENT STAGE GUIDANCE:`;
     }
 
     const messages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: systemPrompt + `
+
+CRITICAL RULES:
+- ONLY do ONE step at a time
+- NEVER combine multiple steps in one response
+- Current step: ${chatState}
+- Wait for user response before moving to next step
+- Keep responses short and focused on current step only` },
       ...conversationHistory.map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
