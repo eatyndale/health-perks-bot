@@ -172,6 +172,9 @@ const AIAnxietyBot = () => {
 
 
   const renderInput = () => {
+    // Debug: log current state
+    console.log('Current chat state:', chatState);
+    
     if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
       return (
         <div className="space-y-4">
@@ -297,6 +300,8 @@ const AIAnxietyBot = () => {
               Assessment: {questionnaireSession.severity} (Score: {questionnaireSession.totalScore}/27)
             </p>
           )}
+          {/* Debug display */}
+          <p className="text-xs text-red-500">Debug: Current state = {chatState}</p>
         </div>
         <div className="flex space-x-2">
           <Button 
