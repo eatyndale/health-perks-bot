@@ -15,6 +15,7 @@ import SessionProgress from "./anxiety-bot/SessionProgress";
 import Questionnaire from "./anxiety-bot/Questionnaire";
 import IntensitySlider from "./anxiety-bot/IntensitySlider";
 import TappingGuide from "./anxiety-bot/TappingGuide";
+import CrisisSupport from "./anxiety-bot/CrisisSupport";
 
 const tappingPoints = [
   { name: "Top of Head", key: "top-head" },
@@ -41,6 +42,7 @@ const AIAnxietyBot = () => {
   const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [selectedSetupStatement, setSelectedSetupStatement] = useState<number | null>(null);
   const [questionnaireSession, setQuestionnaireSession] = useState<QuestionnaireSession | null>(null);
+  const [showCrisisSupport, setShowCrisisSupport] = useState(false);
 
   const { 
     messages, 
@@ -48,7 +50,8 @@ const AIAnxietyBot = () => {
     sendMessage, 
     startNewSession, 
     sessionContext,
-    userProfile 
+    userProfile,
+    crisisDetected
   } = useAIChat({
     onStateChange: (newState) => {
       console.log('State change:', chatState, '->', newState);
@@ -56,6 +59,9 @@ const AIAnxietyBot = () => {
     },
     onSessionUpdate: (context) => {
       // Update local state based on AI conversation
+    },
+    onCrisisDetected: () => {
+      setShowCrisisSupport(true);
     }
   });
 
@@ -426,6 +432,11 @@ const AIAnxietyBot = () => {
           )}
         </div>
       </div>
+      
+      {/* Crisis Support Modal */}
+      {showCrisisSupport && (
+        <CrisisSupport onClose={() => setShowCrisisSupport(false)} />
+      )}
     </div>
   );
 };

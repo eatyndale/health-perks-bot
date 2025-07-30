@@ -17,15 +17,17 @@ interface SessionContext {
 interface UseAIChatProps {
   onStateChange: (state: ChatState) => void;
   onSessionUpdate: (context: SessionContext) => void;
+  onCrisisDetected?: () => void;
 }
 
-export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) => {
+export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: UseAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatSession, setCurrentChatSession] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [sessionContext, setSessionContext] = useState<SessionContext>({});
   const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
+  const [crisisDetected, setCrisisDetected] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -168,6 +170,8 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
 
       // Handle crisis detection
       if (data.crisisDetected) {
+        setCrisisDetected(true);
+        onCrisisDetected?.();
         onStateChange('complete'); // End session and show crisis resources
       }
 
@@ -187,7 +191,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
     } finally {
       setIsLoading(false);
     }
-  }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate]);
+  }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate, onCrisisDetected]);
 
   const determineNextState = (currentState: ChatState, aiResponse: string): ChatState | null => {
     // Determine next state based on AI response content
@@ -244,6 +248,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
     sendMessage,
     startNewSession,
     sessionContext,
-    userProfile
+    userProfile,
+    crisisDetected
   };
 };
