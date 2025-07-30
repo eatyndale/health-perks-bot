@@ -144,6 +144,12 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
       setMessages(finalMessages);
       setConversationHistory(finalMessages);
 
+      // Handle state transitions based on AI response and current state
+      const nextState = determineNextState(chatState, data.response);
+      if (nextState && nextState !== chatState) {
+        onStateChange(nextState);
+      }
+
       // Update chat session in database
       // Generate session name based on emotions if we have session context
       let sessionName;
@@ -183,14 +189,33 @@ export const useAIChat = ({ onStateChange, onSessionUpdate }: UseAIChatProps) =>
     }
   }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate]);
 
-  const extractContextFromAI = (aiResponse: string, currentState: ChatState): Partial<SessionContext> => {
-    // Extract structured data from AI responses based on current state
-    const context: Partial<SessionContext> = {};
+  const determineNextState = (currentState: ChatState, aiResponse: string): ChatState | null => {
+    // Determine next state based on AI response content
+    const response = aiResponse.toLowerCase();
     
-    // This could be enhanced with more sophisticated parsing
-    // For now, we'll rely on the state transitions to capture context
+    if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
+      return 'gathering-feeling';
+    }
+    if (response.includes('where do you feel it') || response.includes('feel that feeling in your body')) {
+      return 'gathering-location';
+    }
+    if (response.includes('rate') && response.includes('scale') && response.includes('0') && response.includes('10')) {
+      return 'gathering-intensity';
+    }
+    if (response.includes('setup statement') || response.includes('even though')) {
+      return 'creating-statements';
+    }
+    if (response.includes('let\'s begin the tapping') || response.includes('tapping sequence')) {
+      return 'tapping';
+    }
+    if (response.includes('how do you feel now') || response.includes('what\'s your intensity now')) {
+      return 'post-tapping';
+    }
+    if (response.includes('amazing work') || response.includes('meditation library')) {
+      return 'advice';
+    }
     
-    return context;
+    return null;
   };
 
   const startNewSession = useCallback(async () => {

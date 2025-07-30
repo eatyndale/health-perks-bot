@@ -29,7 +29,10 @@ const tappingPoints = [
 
 const AIAnxietyBot = () => {
   const { toast } = useToast();
-  const [chatState, setChatState] = useState<ChatState>('questionnaire');
+  const [chatState, setChatState] = useState<ChatState>(() => {
+    const hasCompletedAssessment = localStorage.getItem('hasCompletedAssessment');
+    return hasCompletedAssessment ? 'initial' : 'questionnaire';
+  });
   const [currentInput, setCurrentInput] = useState("");
   const [currentIntensity, setCurrentIntensity] = useState([5]);
   const [showHistory, setShowHistory] = useState(false);
@@ -47,7 +50,10 @@ const AIAnxietyBot = () => {
     sessionContext,
     userProfile 
   } = useAIChat({
-    onStateChange: setChatState,
+    onStateChange: (newState) => {
+      console.log('State change:', chatState, '->', newState);
+      setChatState(newState);
+    },
     onSessionUpdate: (context) => {
       // Update local state based on AI conversation
     }
@@ -77,10 +83,19 @@ const AIAnxietyBot = () => {
 
   const handleQuestionnaireComplete = (session: QuestionnaireSession) => {
     setQuestionnaireSession(session);
+    localStorage.setItem('hasCompletedAssessment', 'true');
     setChatState('initial');
     toast({
       title: "Assessment Complete",
       description: `Your anxiety level: ${session.severity} (Score: ${session.totalScore}/27)`,
+    });
+  };
+
+  const handleSkipAssessment = () => {
+    setChatState('initial');
+    toast({
+      title: "Assessment Skipped",
+      description: "You can take the assessment later from the menu.",
     });
   };
 
@@ -101,31 +116,20 @@ const AIAnxietyBot = () => {
       }
     }
 
-    // Determine next state based on current state
-    let nextState = chatState;
+    // Add context based on current state
     switch (chatState) {
       case 'initial':
-        nextState = 'gathering-feeling';
         additionalContext.problem = currentInput;
         break;
       case 'gathering-feeling':
-        nextState = 'gathering-location';
         additionalContext.feeling = currentInput;
         break;
       case 'gathering-location':
-        nextState = 'gathering-intensity';
         additionalContext.bodyLocation = currentInput;
-        break;
-      case 'gathering-intensity':
-        nextState = 'creating-statements';
-        break;
-      case 'post-tapping':
-        nextState = currentIntensity[0] === 0 ? 'advice' : 'creating-statements';
         break;
     }
 
     await sendMessage(messageToSend, chatState, additionalContext);
-    setChatState(nextState);
     setCurrentInput("");
   };
 
@@ -226,6 +230,28 @@ const AIAnxietyBot = () => {
       );
     }
 
+    if (chatState === 'gathering-feeling') {
+      return (
+        <div className="flex space-x-2">
+          <Input
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="e.g., anxious, sad, angry, frustrated..."
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading || !currentInput.trim()}
+            size="sm"
+            className="self-end"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
+
     if (chatState === 'gathering-location') {
       return (
         <div className="flex space-x-2">
@@ -254,9 +280,10 @@ const AIAnxietyBot = () => {
           value={currentInput}
           onChange={(e) => setCurrentInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Type your response..."
+          placeholder={chatState === 'initial' ? "Tell me what's bothering you..." : "Type your response..."}
           className="flex-1"
           rows={2}
+          disabled={isLoading}
         />
         <Button 
           onClick={handleSubmit} 
@@ -284,6 +311,15 @@ const AIAnxietyBot = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Anxiety Assessment</h1>
           <p className="text-gray-600">Let's start by understanding your current mental health state</p>
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={handleSkipAssessment}
+              className="mr-2"
+            >
+              Skip Assessment
+            </Button>
+          </div>
         </div>
         <Questionnaire onComplete={handleQuestionnaireComplete} />
       </div>

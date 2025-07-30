@@ -77,21 +77,20 @@ CURRENT STAGE GUIDANCE:`;
         systemPrompt += `
 - Ask: "What's the utmost negative emotion you're feeling right now ${userName}?"
 - Validate their response with empathy
-- If they say "anxiety" or similar, respond: "OK, and on a scale of 0 to 10, with 10 being really strong, how strong would you say that [emotion] is that you're feeling?"`;
+- Wait for them to respond with the emotion before moving to next step`;
         break;
       case 'gathering-location':
         systemPrompt += `
-- Say: "I'd like you to close your eyes and focus on that emotion. Can you feel that feeling in your body anywhere?"
-- Ask: "where do you feel it in your body?"
+- Say: "Thank you for sharing that, ${userName}. I want you to focus on that ${sessionContext.feeling || 'feeling'} for a moment."
+- Ask: "Can you tell me where you feel it in your body?"
 - Common responses: chest, stomach, shoulders, throat, head
-- Acknowledge: "OK, tune into that feeling and notice it. Acknowledge it, knowing you're safe right now"`;
+- Acknowledge their response and prepare for intensity rating`;
         break;
       case 'gathering-intensity':
         systemPrompt += `
-- Ask them to rate the intensity on a 0-10 scale
-- If >7: "That's pretty high, let's just do a few general rounds of tapping first... OK?"
-- If 4-7: Move to specific issue exploration
-- If <4: "You're doing great... what is that [number] about specifically?"`;
+- Acknowledge the body location: "OK, so you feel that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'}."
+- Ask them to rate the intensity: "On a scale of 0 to 10, with 0 being no intensity and 10 being extreme intensity, how would you rate that feeling right now?"
+- Wait for their rating before proceeding to setup statements`;
         break;
       case 'creating-statements':
         systemPrompt += `
