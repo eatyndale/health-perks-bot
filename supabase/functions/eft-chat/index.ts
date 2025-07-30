@@ -3,10 +3,45 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
+// Configure CORS and security headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
 };
+
+// Simple rate limiting (in production, use Redis or similar)
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 10; // 10 requests per minute
+const RATE_WINDOW = 60000; // 1 minute
+
+function checkRateLimit(clientId: string): boolean {
+  const now = Date.now();
+  const clientData = requestCounts.get(clientId);
+  
+  if (!clientData || now > clientData.resetTime) {
+    requestCounts.set(clientId, { count: 1, resetTime: now + RATE_WINDOW });
+    return true;
+  }
+  
+  if (clientData.count >= RATE_LIMIT) {
+    return false;
+  }
+  
+  clientData.count++;
+  return true;
+}
+
+function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') return '';
+  return input.trim().slice(0, 1000); // Limit input length
+}
+
+function validateIntensity(intensity: any): boolean {
+  return typeof intensity === 'number' && intensity >= 0 && intensity <= 10;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,6 +49,20 @@ serve(async (req) => {
   }
 
   try {
+    // Get client identifier for rate limiting
+    const clientId = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    
+    // Check rate limit
+    if (!checkRateLimit(clientId)) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded. Please try again later.',
+        response: "I'm getting a lot of requests right now. Please wait a moment and try again."
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { 
       message, 
       chatState, 
@@ -22,17 +71,42 @@ serve(async (req) => {
       conversationHistory 
     } = await req.json();
 
+    // Input validation and sanitization
+    if (!message || typeof message !== 'string') {
+      throw new Error('Invalid message format');
+    }
+
+    const sanitizedMessage = sanitizeInput(message);
+    const sanitizedUserName = userName ? sanitizeInput(userName) : 'User';
+    const sanitizedChatState = typeof chatState === 'string' ? chatState : 'initial';
+
+    // Validate session context if provided
+    if (sessionContext) {
+      if (sessionContext.intensity !== undefined && !validateIntensity(sessionContext.intensity)) {
+        throw new Error('Invalid intensity value');
+      }
+      if (sessionContext.feeling) {
+        sessionContext.feeling = sanitizeInput(sessionContext.feeling);
+      }
+      if (sessionContext.bodyLocation) {
+        sessionContext.bodyLocation = sanitizeInput(sessionContext.bodyLocation);
+      }
+      if (sessionContext.problem) {
+        sessionContext.problem = sanitizeInput(sessionContext.problem);
+      }
+    }
+
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-// Build context-aware system prompt based on chat state
+    // Build context-aware system prompt based on chat state
     let systemPrompt = `You are an empathetic EFT (Emotional Freedom Techniques) tapping assistant trained in proper therapeutic protocols. Your role is to guide users through anxiety management using professional EFT tapping techniques.
 
 USER CONTEXT:
-- User's name: ${userName}
+- User's name: ${sanitizedUserName}
 - Current session context: ${JSON.stringify(sessionContext)}
-- Chat state: ${chatState}
+- Chat state: ${sanitizedChatState}
 
 CORE THERAPEUTIC RULES:
 1. ALWAYS address the user by their first name when greeting them
@@ -139,7 +213,7 @@ CRITICAL RULES:
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),
-      { role: 'user', content: message }
+      { role: 'user', content: sanitizedMessage }
     ];
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -167,7 +241,7 @@ CRITICAL RULES:
     // Detect crisis keywords in user message
     const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'hurt myself', 'die', 'death', 'want to die'];
     const containsCrisisKeyword = crisisKeywords.some(keyword => 
-      message.toLowerCase().includes(keyword)
+      sanitizedMessage.toLowerCase().includes(keyword)
     );
 
     return new Response(JSON.stringify({ 

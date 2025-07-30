@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService, UserProfile } from '@/services/supabaseService';
 import { ChatState, Message } from '@/components/anxiety-bot/types';
+import { SecureStorage } from '@/utils/secureStorage';
 
 interface SessionContext {
   problem?: string;

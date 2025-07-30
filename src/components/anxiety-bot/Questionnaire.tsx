@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuestionnaireResponse, QuestionnaireSession } from "./types";
+import { InputValidator } from "@/utils/inputValidation";
 
 interface QuestionnaireProps {
   onComplete: (session: QuestionnaireSession) => void;
@@ -39,6 +40,12 @@ const Questionnaire = ({ onComplete }: QuestionnaireProps) => {
   const [responses, setResponses] = useState<QuestionnaireResponse[]>([]);
 
   const handleAnswer = (answer: number) => {
+    // Validate the answer
+    if (!InputValidator.validateAssessmentAnswer(answer)) {
+      console.error('Invalid assessment answer:', answer);
+      return;
+    }
+
     const newResponse: QuestionnaireResponse = {
       question: currentQuestion,
       answer
@@ -50,7 +57,13 @@ const Questionnaire = ({ onComplete }: QuestionnaireProps) => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     } else {
-      // Complete questionnaire
+      // Complete questionnaire - validate all responses
+      const answers = updatedResponses.map(r => r.answer);
+      if (!InputValidator.validateAssessmentAnswers(answers)) {
+        console.error('Invalid assessment answers array:', answers);
+        return;
+      }
+
       const totalScore = updatedResponses.reduce((sum, response) => sum + response.answer, 0);
       const severity = getSeverity(totalScore);
       
