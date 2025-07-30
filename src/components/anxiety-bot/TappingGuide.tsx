@@ -90,38 +90,64 @@ const TappingGuide = ({ reminderPhrases, onComplete, onPointChange }: TappingGui
           <Progress value={progress} className="h-2" />
         </div>
 
-        {/* Visual Guide */}
-        <div className="relative bg-gradient-to-b from-blue-50 to-green-50 rounded-lg p-8 h-80">
+        {/* Visual Body Diagram */}
+        <div className="relative bg-gradient-to-b from-primary/5 to-secondary/5 rounded-lg p-8 h-96">
           <div className="relative w-full h-full">
-            {/* Head outline (simplified) */}
+            {/* Enhanced body silhouette */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-32 h-40 rounded-full border-2 border-gray-300 bg-white/50">
-                {/* Face features */}
-                <div className="absolute top-6 left-8 w-2 h-2 rounded-full bg-gray-400" /> {/* Left eye */}
-                <div className="absolute top-6 right-8 w-2 h-2 rounded-full bg-gray-400" /> {/* Right eye */}
-                <div className="absolute top-12 left-1/2 transform -translate-x-1/2 w-1 h-3 bg-gray-400" /> {/* Nose */}
-                <div className="absolute top-16 left-1/2 transform -translate-x-1/2 w-4 h-1 rounded bg-gray-400" /> {/* Mouth */}
+              <div className="relative">
+                {/* Head */}
+                <div className="relative w-20 h-24 rounded-full border-2 border-muted bg-background/80 mx-auto">
+                  {/* Face features */}
+                  <div className="absolute top-4 left-4 w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  <div className="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-2 bg-muted-foreground" />
+                  <div className="absolute top-11 left-1/2 transform -translate-x-1/2 w-3 h-0.5 rounded bg-muted-foreground" />
+                </div>
+                
+                {/* Body */}
+                <div className="relative w-16 h-32 bg-background/80 border-2 border-muted rounded-b-lg mx-auto -mt-1">
+                  {/* Shoulders */}
+                  <div className="absolute -top-1 -left-6 w-6 h-8 bg-background/80 border-2 border-muted rounded-l-lg" />
+                  <div className="absolute -top-1 -right-6 w-6 h-8 bg-background/80 border-2 border-muted rounded-r-lg" />
+                </div>
               </div>
             </div>
 
-            {/* Tapping points */}
+            {/* Enhanced tapping points with better positioning */}
             {tappingPoints.map((point, index) => (
               <div
                 key={point.key}
-                className={`absolute w-4 h-4 rounded-full transition-all duration-300 ${
+                className={`absolute w-5 h-5 rounded-full transition-all duration-500 ${
                   index === currentPoint
-                    ? 'bg-red-500 scale-150 animate-pulse shadow-lg'
+                    ? 'bg-destructive scale-150 animate-pulse shadow-lg shadow-destructive/50 ring-4 ring-destructive/30'
                     : index < currentPoint
-                    ? 'bg-green-500 scale-110'
-                    : 'bg-gray-400 scale-100'
+                    ? 'bg-primary scale-125 shadow-md'
+                    : 'bg-muted scale-100 opacity-60'
                 }`}
                 style={{
                   left: `${point.position.x}%`,
                   top: `${point.position.y}%`,
-                  transform: 'translate(-50%, -50%)'
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: index === currentPoint ? 10 : 1
                 }}
-              />
+              >
+                {/* Point number indicator */}
+                <div className={`absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold ${
+                  index === currentPoint ? 'text-destructive' : 
+                  index < currentPoint ? 'text-primary' : 'text-muted-foreground'
+                }`}>
+                  {index + 1}
+                </div>
+              </div>
             ))}
+            
+            {/* Breathing animation overlay when active */}
+            {isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-32 h-32 border-4 border-primary/30 rounded-full animate-ping" />
+              </div>
+            )}
           </div>
         </div>
 

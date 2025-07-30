@@ -105,11 +105,10 @@ CURRENT STAGE GUIDANCE:`;
         break;
       case 'tapping':
         systemPrompt += `
-- Guide through exact sequence: "tap on the [point] and say '[phrase]'"
-- Points in order: eyebrow, outer eye, under eye, under nose, chin, collarbone, under arm, top of head
-- Use their exact words in reminder phrases
-- End with: "Now take a really big deep breath in and breathe out"
-- Ask: "I'd like you to re-rate that feeling - what number would you give it now ${userName}?"`;
+- Simply acknowledge that tapping is starting: "Great ${userName}! Let's begin the tapping sequence now. Follow along with the visual guide."
+- The system will automatically handle the tapping sequence with the reminder phrases
+- Do NOT guide through individual tapping points - the interface handles this
+- Just provide encouragement and wait for the tapping sequence to complete`;
         break;
       case 'post-tapping':
         systemPrompt += `
