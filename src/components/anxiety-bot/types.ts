@@ -1,5 +1,17 @@
 
-export type ChatState = 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-intensity' | 'creating-statements' | 'tapping' | 'post-tapping' | 'advice' | 'complete';
+export type ChatState = 'questionnaire' | 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-intensity' | 'creating-statements' | 'tapping' | 'post-tapping' | 'advice' | 'complete';
+
+export interface QuestionnaireResponse {
+  question: number;
+  answer: number; // 0-3 scale
+}
+
+export interface QuestionnaireSession {
+  responses: QuestionnaireResponse[];
+  totalScore: number;
+  severity: 'Minimal' | 'Mild' | 'Moderate' | 'Moderately severe' | 'Severe';
+  isComplete: boolean;
+}
 
 export interface ChatSession {
   id: string;

@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { RotateCcw, History, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useAIChat } from "@/hooks/useAIChat";
-import { ChatState } from "./anxiety-bot/types";
+import { ChatState, QuestionnaireSession } from "./anxiety-bot/types";
 import { supabaseService } from "@/services/supabaseService";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import ChatHistory from "./anxiety-bot/ChatHistory";
 import SessionProgress from "./anxiety-bot/SessionProgress";
+import Questionnaire from "./anxiety-bot/Questionnaire";
+import IntensitySlider from "./anxiety-bot/IntensitySlider";
+import TappingGuide from "./anxiety-bot/TappingGuide";
 
 const tappingPoints = [
   { name: "Top of Head", key: "top-head" },
@@ -26,7 +29,7 @@ const tappingPoints = [
 
 const AIAnxietyBot = () => {
   const { toast } = useToast();
-  const [chatState, setChatState] = useState<ChatState>('initial');
+  const [chatState, setChatState] = useState<ChatState>('questionnaire');
   const [currentInput, setCurrentInput] = useState("");
   const [currentIntensity, setCurrentIntensity] = useState([5]);
   const [showHistory, setShowHistory] = useState(false);
@@ -34,6 +37,7 @@ const AIAnxietyBot = () => {
   const [isTapping, setIsTapping] = useState(false);
   const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [selectedSetupStatement, setSelectedSetupStatement] = useState<number | null>(null);
+  const [questionnaireSession, setQuestionnaireSession] = useState<QuestionnaireSession | null>(null);
 
   const { 
     messages, 
@@ -71,20 +75,30 @@ const AIAnxietyBot = () => {
     }
   };
 
+  const handleQuestionnaireComplete = (session: QuestionnaireSession) => {
+    setQuestionnaireSession(session);
+    setChatState('initial');
+    toast({
+      title: "Assessment Complete",
+      description: `Your anxiety level: ${session.severity} (Score: ${session.totalScore}/27)`,
+    });
+  };
+
   const handleSubmit = async () => {
-    if (!currentInput.trim() && chatState !== 'gathering-intensity') return;
+    if (!currentInput.trim() && !['gathering-intensity', 'post-tapping'].includes(chatState)) return;
 
     let messageToSend = currentInput;
     let additionalContext: any = {};
 
     // Handle intensity submission
-    if (chatState === 'gathering-intensity') {
+    if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
       messageToSend = `${currentIntensity[0]}/10`;
-      additionalContext.initialIntensity = currentIntensity[0];
-      additionalContext.currentIntensity = currentIntensity[0];
-    } else if (chatState === 'post-tapping') {
-      messageToSend = `${currentIntensity[0]}/10`;
-      additionalContext.currentIntensity = currentIntensity[0];
+      if (chatState === 'gathering-intensity') {
+        additionalContext.initialIntensity = currentIntensity[0];
+        additionalContext.currentIntensity = currentIntensity[0];
+      } else {
+        additionalContext.currentIntensity = currentIntensity[0];
+      }
     }
 
     // Determine next state based on current state
@@ -131,13 +145,9 @@ const AIAnxietyBot = () => {
     setCurrentTappingPoint(0);
   };
 
-  const handleNextTappingPoint = () => {
-    if (currentTappingPoint < tappingPoints.length - 1) {
-      setCurrentTappingPoint(prev => prev + 1);
-    } else {
-      setIsTapping(false);
-      setChatState('post-tapping');
-    }
+  const handleTappingComplete = () => {
+    setIsTapping(false);
+    setChatState('post-tapping');
   };
 
   const renderSetupStatements = () => {
@@ -160,23 +170,6 @@ const AIAnxietyBot = () => {
     );
   };
 
-  const renderTappingGuide = () => {
-    if (!isTapping) return null;
-
-    const currentPoint = tappingPoints[currentTappingPoint];
-    return (
-      <div className="space-y-4 mt-4 p-4 bg-primary/10 rounded-lg">
-        <h4 className="font-semibold">Tap on: {currentPoint.name}</h4>
-        <p className="text-sm">
-          {sessionContext.reminderPhrases?.[currentTappingPoint] || 
-           `Tap gently on your ${currentPoint.name.toLowerCase()} while focusing on your concern.`}
-        </p>
-        <Button onClick={handleNextTappingPoint} className="w-full">
-          {currentTappingPoint < tappingPoints.length - 1 ? 'Next Point' : 'Complete Round'}
-        </Button>
-      </div>
-    );
-  };
 
   const renderInput = () => {
     if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
@@ -184,14 +177,11 @@ const AIAnxietyBot = () => {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Rate your intensity (0-10): {currentIntensity[0]}
+              Rate your intensity (0-10):
             </label>
-            <Slider
+            <IntensitySlider
               value={currentIntensity}
               onValueChange={setCurrentIntensity}
-              max={10}
-              min={0}
-              step={1}
               className="w-full"
             />
           </div>
@@ -207,7 +197,13 @@ const AIAnxietyBot = () => {
     }
 
     if (chatState === 'tapping') {
-      return renderTappingGuide();
+      return (
+        <TappingGuide
+          reminderPhrases={sessionContext.reminderPhrases || []}
+          onComplete={handleTappingComplete}
+          onPointChange={setCurrentTappingPoint}
+        />
+      );
     }
 
     if (chatState === 'advice' || chatState === 'complete') {
@@ -222,6 +218,28 @@ const AIAnxietyBot = () => {
             className="w-full"
           >
             View Chat History
+          </Button>
+        </div>
+      );
+    }
+
+    if (chatState === 'gathering-location') {
+      return (
+        <div className="flex space-x-2">
+          <Input
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="e.g., chest, stomach, shoulders, throat..."
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading || !currentInput.trim()}
+            size="sm"
+            className="self-end"
+          >
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       );
@@ -257,10 +275,29 @@ const AIAnxietyBot = () => {
     });
   };
 
+  if (chatState === 'questionnaire') {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Anxiety Assessment</h1>
+          <p className="text-gray-600">Let's start by understanding your current mental health state</p>
+        </div>
+        <Questionnaire onComplete={handleQuestionnaireComplete} />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">AI Anxiety Support Chat</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">AI Anxiety Support Chat</h1>
+          {questionnaireSession && (
+            <p className="text-sm text-gray-600">
+              Assessment: {questionnaireSession.severity} (Score: {questionnaireSession.totalScore}/27)
+            </p>
+          )}
+        </div>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
