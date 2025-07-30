@@ -313,7 +313,7 @@ CRITICAL RULES:
     // If crisis detected, modify AI response to be supportive and redirect to resources
     let finalResponse = aiResponse;
     if (crisisDetected) {
-      finalResponse = `${userProfile?.first_name || 'Friend'}, I can see you're going through a really difficult time right now. Your safety and wellbeing are the most important thing. I want to connect you with people who are specially trained to help in these situations. Please know that you're not alone, and there are people who care about you and want to help. Let me show you some immediate support resources.`;
+      finalResponse = `${sanitizedUserName || 'Friend'}, I can see you're going through a really difficult time right now. Your safety and wellbeing are the most important thing. I want to connect you with people who are specially trained to help in these situations. Please know that you're not alone, and there are people who care about you and want to help. Let me show you some immediate support resources.`;
     }
 
     return new Response(JSON.stringify({ 
