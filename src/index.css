@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 82 69% 45%;
+    --primary: 190 58% 56%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,15 +33,18 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 82 69% 45%;
+    --ring: 190 58% 56%;
 
     --radius: 0.5rem;
+
+    /* Button-specific color */
+    --button-primary: 28 87% 67%;
 
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
 
-    --sidebar-primary: 82 69% 45%;
+    --sidebar-primary: 190 58% 56%;
 
     --sidebar-primary-foreground: 0 0% 98%;
 
@@ -51,7 +54,7 @@
 
     --sidebar-border: 220 13% 91%;
 
-    --sidebar-ring: 82 69% 45%;
+    --sidebar-ring: 190 58% 56%;
   }
 
   .dark {
@@ -64,7 +67,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 82 69% 55%;
+    --primary: 190 58% 56%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -81,15 +84,15 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 82 69% 55%;
+    --ring: 190 58% 56%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 82 69% 55%;
+    --sidebar-primary: 190 58% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 82 69% 55%;
+    --sidebar-ring: 190 58% 56%;
   }
 }
 
@@ -99,6 +102,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-noto-sans-sc;
   }
 }

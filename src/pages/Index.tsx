@@ -139,8 +139,8 @@ const Index = () => {
           <div className="text-center mb-16 animate-fade-in">
             <div className="flex justify-center mb-6">
               <img 
-                src="/lovable-uploads/dc1752d1-69ff-42d2-b27b-969c6510b75d.png" 
-                alt="HealthPerks" 
+                src="/lovable-uploads/2323e4a7-8630-4879-88a4-0b0c0be5aba7.png" 
+                alt="Tapaway" 
                 className="h-16"
               />
             </div>
