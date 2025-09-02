@@ -47,7 +47,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Button
           variant="ghost"
@@ -60,7 +60,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
 
         <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <Heart className="w-6 h-6 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
@@ -85,7 +85,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="border-gray-300 focus:border-blue-500"
+                    className="border-gray-300 focus:border-primary"
                   />
                 </div>
               )}
@@ -98,7 +98,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="border-gray-300 focus:border-blue-500"
+                  className="border-gray-300 focus:border-primary"
                 />
               </div>
               <div className="space-y-2">
@@ -110,7 +110,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="border-gray-300 focus:border-blue-500"
+                  className="border-gray-300 focus:border-primary"
                 />
               </div>
               {error && (
@@ -121,7 +121,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {loading ? "..." : (isLogin ? "Sign In" : "Create Account")}
               </Button>
@@ -130,7 +130,7 @@ const AuthForm = ({ onSuccess, onBack, message }: AuthFormProps) => {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 {isLogin 
                   ? "Don't have an account? Sign up" 
