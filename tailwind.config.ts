@@ -20,6 +20,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				'sans': ['Noto Sans SC', 'sans-serif'],
 				'noto-sans-sc': ['Noto Sans SC', 'sans-serif'],
 			},
 			colors: {
