@@ -174,29 +174,37 @@ const Index = () => {
             {[
               {
                 icon: Brain,
+                image: "/lovable-uploads/20700410-71b5-4ebf-a90d-69f0d058c56d.png",
                 title: "Science-Based",
                 description: "Built on proven wellness techniques and psychological research"
               },
               {
                 icon: Heart,
+                image: "/lovable-uploads/6e98e6d1-0de5-4a3b-bed3-bd379424897e.png",
                 title: "Personalized",
                 description: "Tailored approach based on your specific wellness patterns"
               },
               {
                 icon: Shield,
+                image: "/lovable-uploads/9c18ca02-3714-48e2-8810-0a8c6f5b1857.png",
                 title: "Safe & Secure",
                 description: "Your wellness data is protected with enterprise-grade security"
               },
               {
                 icon: Users,
+                image: "/lovable-uploads/173cc014-fcdd-411d-832e-83bd13dc5d27.png",
                 title: "Professional Support",
                 description: "Crisis intervention and professional referrals when needed"
               }
             ].map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/70 backdrop-blur-sm">
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/70 backdrop-blur-sm group">
                 <CardHeader className="text-center pb-2">
-                  <div className="w-12 h-12 bg-[#4dbad1] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <feature.icon className="w-6 h-6 text-white" />
+                  <div className="relative w-20 h-20 mx-auto mb-4 transition-transform duration-300 group-hover:scale-110">
+                    <img 
+                      src={feature.image} 
+                      alt={feature.title}
+                      className="w-full h-full object-contain animate-fade-in"
+                    />
                   </div>
                   <CardTitle className="text-lg font-semibold text-gray-900">{feature.title}</CardTitle>
                 </CardHeader>
