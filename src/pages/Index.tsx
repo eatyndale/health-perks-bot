@@ -79,7 +79,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {showAuth ? (
         <AuthForm 
           onSuccess={handleAuthSuccess} 
@@ -107,7 +107,7 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-gradient-to-r from-[#94c11f] to-lime-500 hover:from-[#7ba018] hover:to-lime-600 text-white">
+                  <Button className="w-full bg-[#4dbad1] hover:bg-[#3da3ba] text-white">
                     Start Assessment
                   </Button>
                 </CardContent>
@@ -121,7 +121,7 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full border-[#94c11f] text-[#94c11f] hover:bg-green-50">
+                  <Button variant="outline" className="w-full border-[#4dbad1] text-[#4dbad1] hover:bg-[#4dbad1]/10">
                     Start Chatting
                   </Button>
                 </CardContent>
@@ -146,7 +146,7 @@ const Index = () => {
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Find Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#94c11f] to-lime-500"> Inner Peace</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4dbad1] to-[#3da3ba]"> Inner Peace</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
               Your personal wellness companion using proven techniques to help you find calm and clarity in the workplace.
@@ -155,14 +155,14 @@ const Index = () => {
               <Button 
                 onClick={handleStartJourney}
                 size="lg" 
-                className="bg-gradient-to-r from-[#94c11f] to-lime-500 hover:from-[#7ba018] hover:to-lime-600 text-white px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
+                className="bg-[#4dbad1] hover:bg-[#3da3ba] text-white px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
               >
                 Start Your Journey
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-2 border-gray-300 hover:border-[#94c11f] px-8 py-3 rounded-full transition-all duration-300"
+                className="border-2 border-gray-300 hover:border-[#4dbad1] px-8 py-3 rounded-full transition-all duration-300"
               >
                 Learn More
               </Button>
@@ -195,7 +195,7 @@ const Index = () => {
             ].map((feature, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-white/70 backdrop-blur-sm">
                 <CardHeader className="text-center pb-2">
-                  <div className="w-12 h-12 bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-12 h-12 bg-[#4dbad1] rounded-full flex items-center justify-center mx-auto mb-4">
                     <feature.icon className="w-6 h-6 text-white" />
                   </div>
                   <CardTitle className="text-lg font-semibold text-gray-900">{feature.title}</CardTitle>
@@ -231,13 +231,13 @@ const Index = () => {
                 }
               ].map((item, index) => (
                 <div key={index} className="relative">
-                  <div className="w-12 h-12 bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  <div className="w-12 h-12 bg-[#4dbad1] rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
                     {item.step}
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-gray-600 leading-relaxed">{item.description}</p>
                   {index < 2 && (
-                    <div className="hidden md:block absolute top-6 left-full w-full h-0.5 bg-gradient-to-r from-green-200 to-lime-200 transform -translate-y-1/2"></div>
+                    <div className="hidden md:block absolute top-6 left-full w-full h-0.5 bg-[#4dbad1]/30 transform -translate-y-1/2"></div>
                   )}
                 </div>
               ))}
@@ -245,14 +245,14 @@ const Index = () => {
           </div>
 
           {/* CTA Section */}
-          <div className="text-center bg-gradient-to-r from-[#94c11f] to-lime-500 rounded-2xl p-12 text-white">
+          <div className="text-center bg-[#4dbad1] rounded-2xl p-12 text-white">
             <h2 className="text-3xl font-bold mb-4">Ready to Start Feeling Better?</h2>
             <p className="text-xl mb-8 opacity-90">Join thousands who have found relief through our wellness program.</p>
             <Button 
               onClick={handleStartJourney}
               size="lg" 
               variant="secondary"
-              className="bg-white text-[#94c11f] hover:bg-gray-100 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
+              className="bg-white text-[#4dbad1] hover:bg-gray-100 px-8 py-3 rounded-full transition-all duration-300 hover:scale-105"
             >
               Get Started Now
             </Button>

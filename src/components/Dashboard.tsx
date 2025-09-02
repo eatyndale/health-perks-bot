@@ -154,8 +154,8 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentState('questionnaire')}>
                 <CardHeader>
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <User className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-[#4dbad1]/20 rounded-full flex items-center justify-center mb-4">
+                    <User className="w-6 h-6 text-[#4dbad1]" />
                   </div>
                   <CardTitle>Complete Assessment</CardTitle>
                   <CardDescription>
@@ -169,8 +169,8 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
               
               <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setCurrentState('bot')}>
                 <CardHeader>
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <Activity className="w-6 h-6 text-green-600" />
+                  <div className="w-12 h-12 bg-[#4dbad1]/20 rounded-full flex items-center justify-center mb-4">
+                    <Activity className="w-6 h-6 text-[#4dbad1]" />
                   </div>
                   <CardTitle>Anxiety Reduction Bot</CardTitle>
                   <CardDescription>
@@ -178,7 +178,7 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white">Start Chatting</Button>
+                  <Button className="w-full bg-[#4dbad1] hover:bg-[#3da3ba] text-white">Start Chatting</Button>
                 </CardContent>
               </Card>
             </div>
@@ -188,7 +188,7 @@ const Dashboard = ({ onSignOut }: DashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-lime-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
