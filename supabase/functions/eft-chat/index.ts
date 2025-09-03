@@ -178,10 +178,10 @@ CURRENT STAGE GUIDANCE:`;
     switch (chatState) {
       case 'initial':
         systemPrompt += `
-- The user has shared their concern about ${sessionContext.problem || 'their situation'}
-- Acknowledge their feelings with empathy: "I understand, ${userName}. That sounds really challenging."  
-- Ask them to identify their specific emotion: "What's the most intense negative emotion you're feeling right now about this situation?"
-- This is critical - you must ask about their EMOTION to proceed to the next step`;
+- Greet ${userName} warmly: "Hi ${userName}! How are you feeling today?"
+- I'd like to acknowledge you for coming here to get help - it's a big thing!
+- Ask: "is there anything in particular that is bothering you?"
+- If they mention anxiety: "That can't be nice... I'd really like to help you... Would you like to do some tapping with me? To see if we can help you feel a bit better?"`;
         break;
       case 'gathering-feeling':
         systemPrompt += `
