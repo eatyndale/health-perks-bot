@@ -254,37 +254,35 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
     // Progressive state-based transitions
     switch (currentState) {
       case 'initial':
-        if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
+        // Look for any response that acknowledges the problem and moves to feeling
+        if (response.includes('understand') || response.includes('sounds') || response.includes('brave') || 
+            response.includes('would you like') || response.includes('let\'s start') || 
+            response.includes('what are you feeling') || response.includes('feeling')) {
           return 'gathering-feeling';
         }
         break;
       case 'gathering-feeling':
-        if (response.includes('where do you feel it') || response.includes('feel it in your body')) {
+        // After user responds to feeling question, ask about body location
+        if (response.includes('where') || response.includes('body') || response.includes('feel it')) {
           return 'gathering-location';
         }
         break;
       case 'gathering-location':
-        if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
+        // After body location, always go to intensity rating
+        if (response.includes('rate') || response.includes('scale') || 
+            response.includes('intensity') || response.includes('0') || response.includes('10')) {
           return 'gathering-pre-intensity';
         }
         break;
       case 'gathering-pre-intensity':
-        return 'setup-statement-1'; // Start progressive setup statements
+        // After intensity rating, move to setup statements
+        return 'setup-statement-1';
       case 'setup-statement-1':
-        if (response.includes('repeat it') || response.includes('tapping the side')) {
-          return 'setup-statement-2';
-        }
-        break;
-      case 'setup-statement-2':
-        if (response.includes('repeat it') || response.includes('tapping the side')) {
-          return 'setup-statement-3';
-        }
-        break;
+        return 'setup-statement-2';
+      case 'setup-statement-2':  
+        return 'setup-statement-3';
       case 'setup-statement-3':
-        if (response.includes('move through the tapping points')) {
-          return 'tapping-point';
-        }
-        break;
+        return 'tapping-point';
       case 'tapping-point':
         // Progress through tapping points one by one
         if (currentTappingPoint < 7) {
@@ -294,19 +292,13 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         }
         break;
       case 'tapping-breathing':
-        if (response.includes('how are you feeling') || response.includes('ready to rate')) {
-          return 'gathering-post-intensity';
-        }
-        break;
+        return 'gathering-post-intensity';
       case 'gathering-post-intensity':
-        if (response.includes('amazing work') || response.includes('meditation library')) {
-          return 'advice';
-        }
         // If intensity is still high, restart the setup process
         if (sessionContext.currentIntensity && sessionContext.currentIntensity > 3) {
           return 'setup-statement-1';
         }
-        break;
+        return 'advice';
       case 'advice':
         return 'complete';
     }
