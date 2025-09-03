@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAIChat } from "@/hooks/useAIChat";
 import { ChatState, QuestionnaireSession } from "./anxiety-bot/types";
 import { supabaseService } from "@/services/supabaseService";
@@ -20,6 +21,7 @@ import SessionActions from "./anxiety-bot/SessionActions";
 import ChatHeader from "./anxiety-bot/ChatHeader";
 import QuestionnaireView from "./anxiety-bot/QuestionnaireView";
 import { AnimatedBodyIllustration } from "./anxiety-bot/AnimatedBodyIllustration";
+import { Hand, MousePointerClick, Activity, RotateCcw } from "lucide-react";
 
 
 const AIAnxietyBot = () => {
@@ -47,7 +49,8 @@ const AIAnxietyBot = () => {
     crisisDetected,
     currentTappingPoint,
     setCurrentTappingPoint,
-    intensityHistory
+    intensityHistory,
+    triggerManualStateChange
   } = useAIChat({
     onStateChange: (newState) => {
       console.log('State change:', chatState, '->', newState);
@@ -173,70 +176,110 @@ const AIAnxietyBot = () => {
     return chatState !== 'tapping-point';
   };
 
-  // Render failsafe buttons
+  // Render failsafe buttons as hover tapping icons
   const renderFailsafeButtons = () => {
     if (!shouldShowFailsafeButtons()) return null;
 
     return (
-      <div className="border-t pt-4 mt-4 space-y-2">
-        <div className="text-xs text-muted-foreground text-center mb-3">
-          Manual Controls
+      <TooltipProvider>
+        <div className="border-t pt-4 mt-4">
+          <div className="text-xs text-muted-foreground text-center mb-3">
+            Manual Controls
+          </div>
+          
+          <div className="flex justify-center gap-3">
+            {/* Start Visual Tapping Icon */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => {
+                    if (sessionContext.initialIntensity === undefined) {
+                      triggerManualStateChange('gathering-pre-intensity');
+                    } else {
+                      triggerManualStateChange('tapping-point');
+                      setCurrentTappingPoint(0);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
+                  aria-label="Start Visual Tapping Session"
+                >
+                  <Hand className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Start Visual Tapping</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Rate Initial Intensity Icon */}
+            {chatState !== 'gathering-pre-intensity' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => triggerManualStateChange('gathering-pre-intensity')}
+                    variant="outline"
+                    size="sm"
+                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
+                    aria-label="Rate Initial Intensity"
+                  >
+                    <Activity className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Rate Initial Intensity</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Resume Tapping Icon */}
+            {sessionContext.initialIntensity !== undefined && chatState !== 'tapping-point' && 
+             chatState !== 'gathering-post-intensity' && chatState !== 'tapping-breathing' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      triggerManualStateChange('tapping-point');
+                      setCurrentTappingPoint(0);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
+                    aria-label="Resume Tapping"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Resume Tapping</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Rate Current Intensity Icon */}
+            {sessionContext.initialIntensity !== undefined && chatState !== 'gathering-post-intensity' && 
+             chatState !== 'tapping-point' && chatState !== 'tapping-breathing' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => triggerManualStateChange('gathering-post-intensity')}
+                    variant="outline"
+                    size="sm"
+                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
+                    aria-label="Rate Current Intensity"
+                  >
+                    <MousePointerClick className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Rate Current Intensity</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-        
-        {/* Start Visual Tapping Button */}
-        <Button
-          onClick={() => {
-            if (sessionContext.initialIntensity === undefined) {
-              setChatState('gathering-pre-intensity');
-            } else {
-              setChatState('tapping-point');
-              setCurrentTappingPoint(0);
-            }
-          }}
-          variant="outline"
-          className="w-full text-sm"
-        >
-          🎯 Start Visual Tapping Session
-        </Button>
-
-        {/* Collect Intensity Button */}
-        {chatState !== 'gathering-pre-intensity' && (
-          <Button
-            onClick={() => setChatState('gathering-pre-intensity')}
-            variant="outline" 
-            className="w-full text-sm"
-          >
-            📊 Rate Initial Intensity
-          </Button>
-        )}
-
-        {/* Resume Tapping Button */}
-        {sessionContext.initialIntensity !== undefined && chatState !== 'tapping-point' && 
-         chatState !== 'gathering-post-intensity' && chatState !== 'tapping-breathing' && (
-          <Button
-            onClick={() => {
-              setChatState('tapping-point');
-              setCurrentTappingPoint(0);
-            }}
-            variant="outline"
-            className="w-full text-sm"
-          >
-            👆 Resume Tapping
-          </Button>
-        )}
-
-        {/* Collect Post-Intensity Button */}
-        {sessionContext.initialIntensity !== undefined && chatState !== 'gathering-post-intensity' && 
-         chatState !== 'tapping-point' && chatState !== 'tapping-breathing' && (
-          <Button
-            onClick={() => setChatState('gathering-post-intensity')}
-            variant="outline"
-            className="w-full text-sm"
-          >
-            📈 Rate Current Intensity
-          </Button>
-        )}
-      </div>
+      </TooltipProvider>
     );
   };
 

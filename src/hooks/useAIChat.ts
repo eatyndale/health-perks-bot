@@ -19,7 +19,7 @@ interface SessionContext {
 }
 
 interface UseAIChatProps {
-  onStateChange: (state: ChatState) => void;
+  onStateChange: (state: ChatState, isManualOverride?: boolean) => void;
   onSessionUpdate: (context: SessionContext) => void;
   onCrisisDetected?: () => void;
   onTypoCorrection?: (original: string, corrected: string) => void;
@@ -54,6 +54,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [intensityHistory, setIntensityHistory] = useState<number[]>([]);
+  const [isManualOverride, setIsManualOverride] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -201,9 +202,17 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       }
 
       // Handle state transitions based on AI response and current state
-      const nextState = determineNextState(chatState, data.response);
-      if (nextState && nextState !== chatState) {
-        onStateChange(nextState);
+      // Only allow AI state transitions if not in manual override mode
+      if (!isManualOverride) {
+        const nextState = determineNextState(chatState, data.response);
+        if (nextState && nextState !== chatState) {
+          onStateChange(nextState);
+        }
+      } else {
+        // Reset manual override after certain safe transitions
+        if (chatState === 'gathering-post-intensity' || chatState === 'complete') {
+          setIsManualOverride(false);
+        }
       }
 
       // Update chat session in database
@@ -334,6 +343,11 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
     }
   }, [userProfile]);
 
+  const triggerManualStateChange = useCallback((newState: ChatState) => {
+    setIsManualOverride(true);
+    onStateChange(newState, true);
+  }, [onStateChange]);
+
   return {
     messages,
     isLoading,
@@ -344,6 +358,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
     crisisDetected,
     currentTappingPoint,
     setCurrentTappingPoint,
-    intensityHistory
+    intensityHistory,
+    triggerManualStateChange
   };
 };
