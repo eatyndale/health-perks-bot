@@ -167,9 +167,90 @@ const AIAnxietyBot = () => {
 
 
 
+  // Helper function to check if failsafe buttons should be shown
+  const shouldShowFailsafeButtons = () => {
+    const hasBasicInfo = sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation;
+    const hasInitialIntensity = sessionContext.initialIntensity !== undefined;
+    const isStuckInState = ['initial', 'gathering-feeling', 'gathering-location', 'gathering-pre-intensity'].includes(chatState);
+    const hasSetupStatements = sessionContext.setupStatements && sessionContext.setupStatements.length > 0;
+    
+    return hasBasicInfo && (hasInitialIntensity || isStuckInState) && chatState !== 'tapping-point';
+  };
+
+  // Render failsafe buttons
+  const renderFailsafeButtons = () => {
+    if (!shouldShowFailsafeButtons()) return null;
+
+    return (
+      <div className="border-t pt-4 mt-4 space-y-2">
+        <div className="text-xs text-muted-foreground text-center mb-3">
+          Manual Controls
+        </div>
+        
+        {/* Start Visual Tapping Button */}
+        {sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation && (
+          <Button
+            onClick={() => {
+              if (sessionContext.initialIntensity === undefined) {
+                setChatState('gathering-pre-intensity');
+              } else {
+                setChatState('tapping-point');
+                setCurrentTappingPoint(0);
+              }
+            }}
+            variant="outline"
+            className="w-full text-sm"
+          >
+            🎯 Start Visual Tapping Session
+          </Button>
+        )}
+
+        {/* Collect Intensity Button */}
+        {sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation && 
+         sessionContext.initialIntensity === undefined && chatState !== 'gathering-pre-intensity' && (
+          <Button
+            onClick={() => setChatState('gathering-pre-intensity')}
+            variant="outline" 
+            className="w-full text-sm"
+          >
+            📊 Rate Initial Intensity
+          </Button>
+        )}
+
+        {/* Resume Tapping Button */}
+        {sessionContext.initialIntensity !== undefined && chatState !== 'tapping-point' && 
+         chatState !== 'gathering-post-intensity' && chatState !== 'tapping-breathing' && (
+          <Button
+            onClick={() => {
+              setChatState('tapping-point');
+              setCurrentTappingPoint(0);
+            }}
+            variant="outline"
+            className="w-full text-sm"
+          >
+            👆 Resume Tapping
+          </Button>
+        )}
+
+        {/* Collect Post-Intensity Button */}
+        {sessionContext.initialIntensity !== undefined && chatState !== 'gathering-post-intensity' && 
+         chatState !== 'tapping-point' && chatState !== 'tapping-breathing' && (
+          <Button
+            onClick={() => setChatState('gathering-post-intensity')}
+            variant="outline"
+            className="w-full text-sm"
+          >
+            📈 Rate Current Intensity
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   const renderInput = () => {
     // Debug: log current state
     console.log('Current chat state:', chatState);
+    console.log('Session context:', sessionContext);
     
     // Progressive tapping states with intensity sliders
     if (chatState === 'gathering-pre-intensity' || chatState === 'gathering-post-intensity') {
@@ -319,14 +400,17 @@ const AIAnxietyBot = () => {
     }
 
     return (
-      <ChatInput
-        chatState={chatState}
-        currentInput={currentInput}
-        onInputChange={setCurrentInput}
-        onSubmit={handleSubmit}
-        onKeyPress={handleKeyPress}
-        isLoading={isLoading}
-      />
+      <div className="space-y-4">
+        <ChatInput
+          chatState={chatState}
+          currentInput={currentInput}
+          onInputChange={setCurrentInput}
+          onSubmit={handleSubmit}
+          onKeyPress={handleKeyPress}
+          isLoading={isLoading}
+        />
+        {renderFailsafeButtons()}
+      </div>
     );
   };
 
