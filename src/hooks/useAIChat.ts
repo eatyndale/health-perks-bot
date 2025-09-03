@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { supabaseService, UserProfile } from '@/services/supabaseService';
 import { ChatState, Message } from '@/components/anxiety-bot/types';
 import { SecureStorage } from '@/utils/secureStorage';
+import { SpellChecker } from '@/utils/spellChecker';
 
 interface SessionContext {
   problem?: string;
@@ -19,6 +20,7 @@ interface UseAIChatProps {
   onStateChange: (state: ChatState) => void;
   onSessionUpdate: (context: SessionContext) => void;
   onCrisisDetected?: () => void;
+  onTypoCorrection?: (original: string, corrected: string) => void;
 }
 
 // Helper function to extract setup statements from AI response
@@ -40,7 +42,7 @@ const extractSetupStatements = (response: string): string[] => {
   return statements;
 };
 
-export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: UseAIChatProps) => {
+export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, onTypoCorrection }: UseAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatSession, setCurrentChatSession] = useState<string | null>(null);
@@ -48,6 +50,8 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
   const [sessionContext, setSessionContext] = useState<SessionContext>({});
   const [conversationHistory, setConversationHistory] = useState<Message[]>([]);
   const [crisisDetected, setCrisisDetected] = useState(false);
+  const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
+  const [intensityHistory, setIntensityHistory] = useState<number[]>([]);
 
   useEffect(() => {
     loadUserProfile();
@@ -122,11 +126,20 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
 
     setIsLoading(true);
 
-    // Add user message
+    // Enhanced typo correction and validation
+    const correctionResult = SpellChecker.correctWithFuzzyMatching(userMessage);
+    let processedMessage = correctionResult.corrected;
+    
+    // Notify about corrections if any were made
+    if (correctionResult.changes.length > 0 && onTypoCorrection) {
+      onTypoCorrection(userMessage, processedMessage);
+    }
+
+    // Add user message (showing original message to user, but using corrected version for AI)
     const userMsg: Message = {
       id: `user-${Date.now()}`,
       type: 'user',
-      content: userMessage,
+      content: userMessage, // Keep original for display
       timestamp: new Date(),
       sessionId: currentChatSession
     };
@@ -134,20 +147,29 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
 
-    // Update session context
+    // Update session context with intensity tracking
     const updatedContext = { ...sessionContext, ...additionalContext };
+    
+    // Track intensity changes
+    if (additionalContext?.currentIntensity !== undefined) {
+      const newHistory = [...intensityHistory, additionalContext.currentIntensity];
+      setIntensityHistory(newHistory);
+    }
+    
     setSessionContext(updatedContext);
     onSessionUpdate(updatedContext);
 
     try {
-      // Call AI function
+      // Call AI function with enhanced context
       const { data, error } = await supabase.functions.invoke('eft-chat', {
         body: {
-          message: userMessage,
+          message: processedMessage, // Use corrected message for AI processing
           chatState,
           userName: userProfile.first_name,
           sessionContext: updatedContext,
-          conversationHistory: conversationHistory.slice(-10) // Last 10 messages for context
+          conversationHistory: conversationHistory.slice(-20), // Increased context window
+          currentTappingPoint,
+          intensityHistory
         }
       });
 
@@ -224,10 +246,10 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
   }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate, onCrisisDetected]);
 
   const determineNextState = (currentState: ChatState, aiResponse: string): ChatState | null => {
-    // Determine next state based on AI response content and current state
+    // Enhanced state transitions for progressive flow
     const response = aiResponse.toLowerCase();
     
-    // State-based transitions to ensure proper flow
+    // Progressive state-based transitions
     switch (currentState) {
       case 'initial':
         if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
@@ -245,45 +267,46 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
         }
         break;
       case 'gathering-intensity':
-        // After intensity rating, always go to creating statements
-        return 'creating-statements';
-      case 'creating-statements':
-        // After setup statements are created, go to tapping
-        if (response.includes('even though') || response.includes('setup statement')) {
-          return 'tapping';
+        return 'setup-statement-1'; // Start progressive setup statements
+      case 'setup-statement-1':
+        if (response.includes('repeat it') || response.includes('tapping the side')) {
+          return 'setup-statement-2';
         }
         break;
-      case 'tapping':
-        // After tapping is complete, go to post-tapping
-        return 'post-tapping';
+      case 'setup-statement-2':
+        if (response.includes('repeat it') || response.includes('tapping the side')) {
+          return 'setup-statement-3';
+        }
+        break;
+      case 'setup-statement-3':
+        if (response.includes('move through the tapping points')) {
+          return 'tapping-point';
+        }
+        break;
+      case 'tapping-point':
+        // Progress through tapping points one by one
+        if (currentTappingPoint < 7) {
+          return 'tapping-point'; // Continue with next point
+        } else {
+          return 'tapping-breathing'; // All points done, move to breathing
+        }
+        break;
+      case 'tapping-breathing':
+        if (response.includes('how are you feeling') || response.includes('ready to rate')) {
+          return 'post-tapping';
+        }
+        break;
       case 'post-tapping':
         if (response.includes('amazing work') || response.includes('meditation library')) {
           return 'advice';
         }
-        // If intensity is still high, create new statements
+        // If intensity is still high, restart the setup process
         if (sessionContext.currentIntensity && sessionContext.currentIntensity > 3) {
-          return 'creating-statements';
+          return 'setup-statement-1';
         }
         break;
       case 'advice':
         return 'complete';
-    }
-    
-    // Fallback pattern matching for edge cases
-    if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
-      return 'gathering-feeling';
-    }
-    if (response.includes('where do you feel it') || response.includes('feel it in your body')) {
-      return 'gathering-location';
-    }
-    if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
-      return 'gathering-intensity';
-    }
-    if (response.includes('how do you feel now') || response.includes('what\'s your intensity now')) {
-      return 'post-tapping';
-    }
-    if (response.includes('amazing work') || response.includes('meditation library')) {
-      return 'advice';
     }
     
     return null;
@@ -316,6 +339,9 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected }: 
     startNewSession,
     sessionContext,
     userProfile,
-    crisisDetected
+    crisisDetected,
+    currentTappingPoint,
+    setCurrentTappingPoint,
+    intensityHistory
   };
 };

@@ -239,7 +239,7 @@ const AnxietyBot = () => {
     addMessage('user', `I choose: "${selectedStatement}"`);
     addMessage('bot', "Perfect! Now let's begin the tapping sequence. I'll guide you through each point. Start by tapping on your karate chop point (side of your hand) while repeating your chosen setup statement 3 times.");
     addMessage('system', 'tapping-guide');
-    setChatState('tapping');
+    setChatState('post-tapping');
     setIsTapping(true);
     setCurrentTappingPoint(0);
   };

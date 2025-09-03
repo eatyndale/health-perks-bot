@@ -34,9 +34,38 @@ function checkRateLimit(clientId: string): boolean {
   return true;
 }
 
+// Simple spell checker for common anxiety terms
+function correctCommonTypos(input: string): string {
+  if (typeof input !== 'string') return '';
+  
+  const corrections: Record<string, string> = {
+    'anxios': 'anxious', 'anxiuos': 'anxious', 'anixous': 'anxious',
+    'stresed': 'stressed', 'stresd': 'stressed',
+    'depresed': 'depressed', 'depress': 'depressed', 
+    'worryed': 'worried', 'woried': 'worried',
+    'scaed': 'scared', 'afraaid': 'afraid',
+    'overwelmed': 'overwhelmed', 'overwhelmd': 'overwhelmed',
+    'panicced': 'panicked', 'terified': 'terrified',
+    'hopeles': 'hopeless', 'helpeles': 'helpless',
+    'fustrated': 'frustrated', 'frustraited': 'frustrated',
+    'stomache': 'stomach', 'stomch': 'stomach', 'shouldor': 'shoulder',
+    'throut': 'throat', 'throaht': 'throat', 'forhead': 'forehead',
+    'cant': "can't", 'wont': "won't", 'dont': "don't", 'isnt': "isn't"
+  };
+  
+  let corrected = input.toLowerCase();
+  for (const [typo, correction] of Object.entries(corrections)) {
+    const regex = new RegExp(`\\b${typo}\\b`, 'gi');
+    corrected = corrected.replace(regex, correction);
+  }
+  
+  return corrected;
+}
+
 function sanitizeInput(input: string): string {
   if (typeof input !== 'string') return '';
-  return input.trim().slice(0, 1000); // Limit input length
+  const corrected = correctCommonTypos(input);
+  return corrected.trim().slice(0, 1000); // Limit input length
 }
 
 function validateIntensity(intensity: any): boolean {
@@ -68,7 +97,9 @@ serve(async (req) => {
       chatState, 
       userName, 
       sessionContext, 
-      conversationHistory 
+      conversationHistory,
+      currentTappingPoint = 0,
+      intensityHistory = []
     } = await req.json();
 
     // Input validation and sanitization
@@ -100,42 +131,47 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Build context-aware system prompt based on chat state
+    // Build enhanced context-aware system prompt
     let systemPrompt = `You are an empathetic EFT (Emotional Freedom Techniques) tapping assistant trained in proper therapeutic protocols. Your role is to guide users through anxiety management using professional EFT tapping techniques.
 
 USER CONTEXT:
 - User's name: ${sanitizedUserName}
 - Current session context: ${JSON.stringify(sessionContext)}
 - Chat state: ${sanitizedChatState}
+- Current tapping point: ${currentTappingPoint}
+- Intensity progression: ${JSON.stringify(intensityHistory)}
+- Full conversation history length: ${conversationHistory.length} messages
+
+ENHANCED CONTEXT AWARENESS:
+- Always reference the user's previous responses and emotions
+- Notice patterns in their language and emotional expressions
+- Acknowledge typos or unclear inputs with understanding
+- Build on previous session insights and progress
+- Use their exact emotional words consistently throughout
 
 CORE THERAPEUTIC RULES:
-1. ALWAYS address the user by their first name when greeting them
+1. ALWAYS address the user by their first name and reference their specific situation
 2. Use the user's EXACT words in setup statements and reminder phrases
 3. If intensity rating is >7, do general tapping rounds first to bring it down
 4. Always ask for body location of feelings and use it in statements
 5. Be warm, empathetic, and validating - acknowledge their courage
-6. Follow the exact tapping point sequence: eyebrow, outer eye, under eye, under nose, chin, collarbone, under arm, top of head
+6. ONE STEP AT A TIME - never rush through multiple phases
 7. Use breathing instructions: "take a deep breath in and breathe out"
 8. If crisis keywords detected, express concern and provide crisis resources immediately
 9. Keep responses concise and natural - avoid repeated filler phrases
+10. UNDERSTAND TYPOS AND RESPOND APPROPRIATELY - be compassionate about misspellings
 
-INTENSITY RULES:
-- If >7: Start with general anxiety tapping to reduce intensity first
-- If 4-7: Move to specific issue tapping with their words
-- If 1-3: Add positive affirmations and completion phrases
-- If 0: Celebrate and offer meditation/advice
-
-TAPPING SEQUENCE FORMAT:
-Setup (side of hand): Create 3 statements using "Even though [their problem/feeling], [self-acceptance]"
-Sequence: Always follow this order with specific reminder phrases using their words
-- Eyebrow, Outer eye, Under eye, Under nose, Chin, Collarbone, Under arm, Top of head
-- End each round with breathing and intensity check
+PROGRESSIVE TAPPING FLOW:
+- Create ONE setup statement at a time, not all three at once
+- Guide through ONE tapping point at a time with specific instructions
+- Allow real-time intensity adjustments during tapping
+- Check in emotionally between each major step
 
 LANGUAGE PATTERNS:
 - "You're doing great [name]" - frequent encouragement
-- "I'd like to acknowledge you for coming here" - validate their effort
-- "That can't be nice... I'd really like to help you" - empathy
-- Reflect their exact words back to them
+- "I can hear that you're feeling [their exact emotion]" - reflect their words
+- "That must be really difficult for you" - empathy
+- Reference their previous statements to show you're listening
 
 CURRENT STAGE GUIDANCE:`;
 
@@ -175,14 +211,40 @@ CURRENT STAGE GUIDANCE:`;
   "This [emotion] in my [body location], [problem], but I want to let it go"
 - ONLY provide the 3 setup statements, nothing else
 - DO NOT mention tapping points or sequences - that comes next
-- End with: "Now let's do the tapping sequence. Please tap along with the visual guide."`;
+- End with: "Choose one of these statements that resonates with you most."`;
         break;
-      case 'tapping':
+      case 'setup-statement-1':
         systemPrompt += `
-- DO NOT provide any tapping instructions - the visual interface handles this
-- DO NOT list tapping points or reminder phrases
-- Simply say: "Great! The tapping sequence will guide you through each point. Follow along with the visual animation."
-- Keep response very short - the visual guide does the work`;
+- Present the FIRST setup statement using their exact words: "Even though I feel this [emotion] in my [body location] because [problem], I'd like to be at peace"
+- Ask them to repeat it while tapping the side of their hand
+- Wait for confirmation before moving to next statement
+- Keep it simple and focused on just this one statement`;
+        break;
+      case 'setup-statement-2':
+        systemPrompt += `
+- Present the SECOND setup statement: "I feel [emotion] in my [body location], [problem], but I'd like to relax now"
+- Ask them to repeat it while tapping the side of their hand
+- Wait for confirmation before moving to next statement`;
+        break;
+      case 'setup-statement-3':
+        systemPrompt += `
+- Present the THIRD setup statement: "This [emotion] in my [body location], [problem], but I want to let it go"
+- Ask them to repeat it while tapping the side of their hand
+- After confirmation, say: "Great! Now we'll move through the tapping points one by one."`;
+        break;
+      case 'tapping-point':
+        systemPrompt += `
+- Guide them through ONE tapping point at a time
+- Current point: ${currentTappingPoint === 0 ? 'eyebrow' : currentTappingPoint === 1 ? 'outer eye' : currentTappingPoint === 2 ? 'under eye' : currentTappingPoint === 3 ? 'under nose' : currentTappingPoint === 4 ? 'chin' : currentTappingPoint === 5 ? 'collarbone' : currentTappingPoint === 6 ? 'under arm' : 'top of head'}
+- Give clear instruction: "Tap the [point] while saying: '[reminder phrase using their words]'"
+- Wait for them to complete before moving to next point
+- Keep responses short and focused on current point only`;
+        break;
+      case 'tapping-breathing':
+        systemPrompt += `
+- Guide them through deep breathing: "Take a deep breath in... and breathe out"
+- Ask how they're feeling right now
+- Check if they want to continue or are ready to rate their intensity`;
         break;
       case 'post-tapping':
         systemPrompt += `
@@ -209,7 +271,8 @@ CRITICAL RULES:
 - Current step: ${chatState}
 - Wait for user response before moving to next step
 - Keep responses short and focused on current step only` },
-      ...conversationHistory.map((msg: any) => ({
+      // Enhanced conversation history with more context
+      ...conversationHistory.slice(-20).map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
         content: msg.content
       })),

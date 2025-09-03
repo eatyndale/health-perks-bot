@@ -32,7 +32,6 @@ const AIAnxietyBot = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [isTapping, setIsTapping] = useState(false);
-  const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [selectedSetupStatement, setSelectedSetupStatement] = useState<number | null>(null);
   const [questionnaireSession, setQuestionnaireSession] = useState<QuestionnaireSession | null>(null);
   const [showCrisisSupport, setShowCrisisSupport] = useState(false);
@@ -44,7 +43,10 @@ const AIAnxietyBot = () => {
     startNewSession, 
     sessionContext,
     userProfile,
-    crisisDetected
+    crisisDetected,
+    currentTappingPoint,
+    setCurrentTappingPoint,
+    intensityHistory
   } = useAIChat({
     onStateChange: (newState) => {
       console.log('State change:', chatState, '->', newState);
@@ -55,6 +57,15 @@ const AIAnxietyBot = () => {
     },
     onCrisisDetected: () => {
       setShowCrisisSupport(true);
+    },
+    onTypoCorrection: (original, corrected) => {
+      if (original !== corrected) {
+        toast({
+          title: "Input Corrected",
+          description: `"${original}" → "${corrected}"`,
+          duration: 3000,
+        });
+      }
     }
   });
 
@@ -143,7 +154,7 @@ const AIAnxietyBot = () => {
     setSelectedSetupStatement(index);
     const statement = sessionContext.setupStatements?.[index] || "Selected setup statement";
     await sendMessage(`I choose: "${statement}"`, 'creating-statements');
-    setChatState('tapping');
+    setChatState('tapping-point');
     setIsTapping(true);
     setCurrentTappingPoint(0);
   };
@@ -159,6 +170,7 @@ const AIAnxietyBot = () => {
     // Debug: log current state
     console.log('Current chat state:', chatState);
     
+    // Progressive tapping states with intensity sliders
     if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
       return (
         <div className="space-y-4">
@@ -171,6 +183,11 @@ const AIAnxietyBot = () => {
               onValueChange={setCurrentIntensity}
               className="w-full"
             />
+            {intensityHistory.length > 0 && (
+              <div className="text-xs text-muted-foreground">
+                Previous ratings: {intensityHistory.join(' → ')}
+              </div>
+            )}
           </div>
           <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
             {isLoading ? 'Processing...' : 'Submit Rating'}
@@ -179,22 +196,103 @@ const AIAnxietyBot = () => {
       );
     }
 
+    // Progressive setup statement states
+    if (chatState === 'setup-statement-1' || chatState === 'setup-statement-2' || chatState === 'setup-statement-3') {
+      return (
+        <div className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Setup Statement {chatState.split('-')[2]} of 3
+          </div>
+          <ChatInput
+            chatState={chatState}
+            currentInput={currentInput}
+            onInputChange={setCurrentInput}
+            onSubmit={handleSubmit}
+            onKeyPress={handleKeyPress}
+            isLoading={isLoading}
+          />
+        </div>
+      );
+    }
+
+    // Progressive tapping point state
+    if (chatState === 'tapping-point') {
+      const tappingPointNames = ['eyebrow', 'outer eye', 'under eye', 'under nose', 'chin', 'collarbone', 'under arm', 'top of head'];
+      const currentPointName = tappingPointNames[currentTappingPoint] || 'unknown';
+      
+      return (
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-2">
+              Tapping Point {currentTappingPoint + 1} of 8
+            </div>
+            <div className="text-lg font-semibold capitalize mb-4">
+              {currentPointName}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                How intense is the feeling now? (0-10):
+              </label>
+              <IntensitySlider
+                value={currentIntensity}
+                onValueChange={setCurrentIntensity}
+                className="w-full"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => {
+                if (currentTappingPoint < 7) {
+                  setCurrentTappingPoint(prev => prev + 1);
+                  handleSubmit();
+                } else {
+                  setChatState('tapping-breathing');
+                }
+              }}
+              disabled={isLoading} 
+              className="flex-1"
+            >
+              {currentTappingPoint < 7 ? 'Next Point' : 'Complete Round'}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // Breathing state
+    if (chatState === 'tapping-breathing') {
+      return (
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="text-lg font-semibold mb-4">
+              Take a Deep Breath
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                How are you feeling now? (0-10):
+              </label>
+              <IntensitySlider
+                value={currentIntensity}
+                onValueChange={setCurrentIntensity}
+                className="w-full"
+              />
+            </div>
+          </div>
+          <Button onClick={handleSubmit} disabled={isLoading} className="w-full">
+            {isLoading ? 'Processing...' : 'Continue'}
+          </Button>
+        </div>
+      );
+    }
+
+    // Legacy creating statements (for backward compatibility)
     if (chatState === 'creating-statements') {
       return (
         <SetupStatements
           statements={sessionContext.setupStatements || []}
           selectedIndex={selectedSetupStatement}
           onSelect={handleSetupStatementSelect}
-        />
-      );
-    }
-
-    if (chatState === 'tapping') {
-      return (
-        <TappingGuide
-          reminderPhrases={sessionContext.reminderPhrases || []}
-          onComplete={handleTappingComplete}
-          onPointChange={setCurrentTappingPoint}
         />
       );
     }
