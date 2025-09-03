@@ -110,15 +110,15 @@ const AIAnxietyBot = () => {
   };
 
   const handleSubmit = async () => {
-    if (!currentInput.trim() && !['gathering-intensity', 'post-tapping'].includes(chatState)) return;
+    if (!currentInput.trim() && !['gathering-pre-intensity', 'gathering-post-intensity'].includes(chatState)) return;
 
     let messageToSend = currentInput;
     let additionalContext: any = {};
 
     // Handle intensity submission
-    if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
+    if (chatState === 'gathering-pre-intensity' || chatState === 'gathering-post-intensity') {
       messageToSend = `${currentIntensity[0]}/10`;
-      if (chatState === 'gathering-intensity') {
+      if (chatState === 'gathering-pre-intensity') {
         additionalContext.initialIntensity = currentIntensity[0];
         additionalContext.currentIntensity = currentIntensity[0];
       } else {
@@ -161,7 +161,7 @@ const AIAnxietyBot = () => {
 
   const handleTappingComplete = () => {
     setIsTapping(false);
-    setChatState('post-tapping');
+    setChatState('gathering-post-intensity');
   };
 
 
@@ -171,7 +171,7 @@ const AIAnxietyBot = () => {
     console.log('Current chat state:', chatState);
     
     // Progressive tapping states with intensity sliders
-    if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
+    if (chatState === 'gathering-pre-intensity' || chatState === 'gathering-post-intensity') {
       return (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -383,9 +383,11 @@ const AIAnxietyBot = () => {
               bodyLocation: sessionContext.bodyLocation || '',
               initialIntensity: sessionContext.initialIntensity || 0,
               currentIntensity: sessionContext.currentIntensity || 0,
+              intensityReadings: [],
               round: sessionContext.round || 0,
               setupStatements: sessionContext.setupStatements || [],
               reminderPhrases: sessionContext.reminderPhrases || [],
+              currentTappingPoint: undefined,
               isComplete: chatState === 'complete'
             }} />
           )}

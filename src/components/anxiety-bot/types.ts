@@ -1,5 +1,5 @@
 
-export type ChatState = 'questionnaire' | 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-intensity' | 'creating-statements' | 'setup-statement-1' | 'setup-statement-2' | 'setup-statement-3' | 'tapping-point' | 'tapping-breathing' | 'post-tapping' | 'advice' | 'complete';
+export type ChatState = 'questionnaire' | 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-pre-intensity' | 'creating-statements' | 'setup-statement-1' | 'setup-statement-2' | 'setup-statement-3' | 'tapping-point' | 'tapping-breathing' | 'gathering-post-intensity' | 'evaluating-progress' | 'advice' | 'complete';
 
 export interface QuestionnaireResponse {
   question: number;
@@ -13,6 +13,12 @@ export interface QuestionnaireSession {
   isComplete: boolean;
 }
 
+export interface IntensityReading {
+  timestamp: Date;
+  intensity: number;
+  phase: 'initial' | 'mid-session' | 'post-session';
+}
+
 export interface ChatSession {
   id: string;
   timestamp: Date;
@@ -21,9 +27,11 @@ export interface ChatSession {
   bodyLocation: string;
   initialIntensity: number;
   currentIntensity: number;
+  intensityReadings: IntensityReading[];
   round: number;
   setupStatements: string[];
   reminderPhrases: string[];
+  currentTappingPoint?: string;
   isComplete: boolean;
 }
 

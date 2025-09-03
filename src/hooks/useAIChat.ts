@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService, UserProfile } from '@/services/supabaseService';
-import { ChatState, Message } from '@/components/anxiety-bot/types';
+import { ChatState, Message, IntensityReading } from '@/components/anxiety-bot/types';
 import { SecureStorage } from '@/utils/secureStorage';
 import { SpellChecker } from '@/utils/spellChecker';
 
@@ -11,9 +11,11 @@ interface SessionContext {
   bodyLocation?: string;
   initialIntensity?: number;
   currentIntensity?: number;
+  intensityReadings?: IntensityReading[];
   round?: number;
   setupStatements?: string[];
   reminderPhrases?: string[];
+  currentTappingPoint?: string;
 }
 
 interface UseAIChatProps {
@@ -263,10 +265,10 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
       case 'gathering-location':
         if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
-          return 'gathering-intensity';
+          return 'gathering-pre-intensity';
         }
         break;
-      case 'gathering-intensity':
+      case 'gathering-pre-intensity':
         return 'setup-statement-1'; // Start progressive setup statements
       case 'setup-statement-1':
         if (response.includes('repeat it') || response.includes('tapping the side')) {
@@ -293,10 +295,10 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
       case 'tapping-breathing':
         if (response.includes('how are you feeling') || response.includes('ready to rate')) {
-          return 'post-tapping';
+          return 'gathering-post-intensity';
         }
         break;
-      case 'post-tapping':
+      case 'gathering-post-intensity':
         if (response.includes('amazing work') || response.includes('meditation library')) {
           return 'advice';
         }
