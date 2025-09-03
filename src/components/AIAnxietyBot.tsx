@@ -169,12 +169,8 @@ const AIAnxietyBot = () => {
 
   // Helper function to check if failsafe buttons should be shown
   const shouldShowFailsafeButtons = () => {
-    const hasBasicInfo = sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation;
-    const hasInitialIntensity = sessionContext.initialIntensity !== undefined;
-    const isStuckInState = ['initial', 'gathering-feeling', 'gathering-location', 'gathering-pre-intensity'].includes(chatState);
-    const hasSetupStatements = sessionContext.setupStatements && sessionContext.setupStatements.length > 0;
-    
-    return hasBasicInfo && (hasInitialIntensity || isStuckInState) && chatState !== 'tapping-point';
+    // Show by default, only hide when in tapping-point state (which has its own interface)
+    return chatState !== 'tapping-point';
   };
 
   // Render failsafe buttons
@@ -188,26 +184,23 @@ const AIAnxietyBot = () => {
         </div>
         
         {/* Start Visual Tapping Button */}
-        {sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation && (
-          <Button
-            onClick={() => {
-              if (sessionContext.initialIntensity === undefined) {
-                setChatState('gathering-pre-intensity');
-              } else {
-                setChatState('tapping-point');
-                setCurrentTappingPoint(0);
-              }
-            }}
-            variant="outline"
-            className="w-full text-sm"
-          >
-            🎯 Start Visual Tapping Session
-          </Button>
-        )}
+        <Button
+          onClick={() => {
+            if (sessionContext.initialIntensity === undefined) {
+              setChatState('gathering-pre-intensity');
+            } else {
+              setChatState('tapping-point');
+              setCurrentTappingPoint(0);
+            }
+          }}
+          variant="outline"
+          className="w-full text-sm"
+        >
+          🎯 Start Visual Tapping Session
+        </Button>
 
         {/* Collect Intensity Button */}
-        {sessionContext.problem && sessionContext.feeling && sessionContext.bodyLocation && 
-         sessionContext.initialIntensity === undefined && chatState !== 'gathering-pre-intensity' && (
+        {chatState !== 'gathering-pre-intensity' && (
           <Button
             onClick={() => setChatState('gathering-pre-intensity')}
             variant="outline" 
