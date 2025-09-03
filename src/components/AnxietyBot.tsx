@@ -32,11 +32,9 @@ const AnxietyBot = () => {
     bodyLocation: '',
     initialIntensity: 0,
     currentIntensity: 0,
-    intensityReadings: [],
     round: 0,
     setupStatements: [],
     reminderPhrases: [],
-    currentTappingPoint: undefined,
     isComplete: false
   });
   const [messages, setMessages] = useState<Message[]>([]);
@@ -70,11 +68,9 @@ const AnxietyBot = () => {
       bodyLocation: '',
       initialIntensity: 0,
       currentIntensity: 0,
-      intensityReadings: [],
       round: 0,
       setupStatements: [],
       reminderPhrases: [],
-      currentTappingPoint: undefined,
       isComplete: false
     };
     
@@ -175,7 +171,7 @@ const AnxietyBot = () => {
     addMessage('user', currentInput);
     setSession(prev => ({ ...prev, bodyLocation: currentInput }));
     addMessage('bot', "Now, on a scale of 0-10, how intense is this feeling right now?");
-    setChatState('gathering-pre-intensity');
+    setChatState('gathering-intensity');
     setCurrentInput("");
   };
 
@@ -243,7 +239,7 @@ const AnxietyBot = () => {
     addMessage('user', `I choose: "${selectedStatement}"`);
     addMessage('bot', "Perfect! Now let's begin the tapping sequence. I'll guide you through each point. Start by tapping on your karate chop point (side of your hand) while repeating your chosen setup statement 3 times.");
     addMessage('system', 'tapping-guide');
-    setChatState('gathering-post-intensity');
+    setChatState('post-tapping');
     setIsTapping(true);
     setCurrentTappingPoint(0);
   };
@@ -255,7 +251,7 @@ const AnxietyBot = () => {
       setIsTapping(false);
       addMessage('bot', "Excellent! You've completed the tapping sequence. Take a deep breath in... and out. Let yourself relax for a moment.");
       addMessage('bot', "Now, thinking about the same issue, how intense does it feel on a scale of 0-10?");
-      setChatState('gathering-post-intensity');
+      setChatState('post-tapping');
     }
   };
 
@@ -328,10 +324,10 @@ const AnxietyBot = () => {
       case 'gathering-location':
         handleLocationSubmit();
         break;
-      case 'gathering-pre-intensity':
+      case 'gathering-intensity':
         handleIntensitySubmit();
         break;
-      case 'gathering-post-intensity':
+      case 'post-tapping':
         handlePostTappingIntensity();
         break;
     }

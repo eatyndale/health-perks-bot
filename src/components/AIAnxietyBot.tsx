@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAIChat } from "@/hooks/useAIChat";
 import { ChatState, QuestionnaireSession } from "./anxiety-bot/types";
 import { supabaseService } from "@/services/supabaseService";
@@ -20,8 +19,6 @@ import ChatInput from "./anxiety-bot/ChatInput";
 import SessionActions from "./anxiety-bot/SessionActions";
 import ChatHeader from "./anxiety-bot/ChatHeader";
 import QuestionnaireView from "./anxiety-bot/QuestionnaireView";
-import { AnimatedBodyIllustration } from "./anxiety-bot/AnimatedBodyIllustration";
-import { Hand, MousePointerClick, Activity, RotateCcw } from "lucide-react";
 
 
 const AIAnxietyBot = () => {
@@ -49,8 +46,7 @@ const AIAnxietyBot = () => {
     crisisDetected,
     currentTappingPoint,
     setCurrentTappingPoint,
-    intensityHistory,
-    triggerManualStateChange
+    intensityHistory
   } = useAIChat({
     onStateChange: (newState) => {
       console.log('State change:', chatState, '->', newState);
@@ -114,15 +110,15 @@ const AIAnxietyBot = () => {
   };
 
   const handleSubmit = async () => {
-    if (!currentInput.trim() && !['gathering-pre-intensity', 'gathering-post-intensity'].includes(chatState)) return;
+    if (!currentInput.trim() && !['gathering-intensity', 'post-tapping'].includes(chatState)) return;
 
     let messageToSend = currentInput;
     let additionalContext: any = {};
 
     // Handle intensity submission
-    if (chatState === 'gathering-pre-intensity' || chatState === 'gathering-post-intensity') {
+    if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
       messageToSend = `${currentIntensity[0]}/10`;
-      if (chatState === 'gathering-pre-intensity') {
+      if (chatState === 'gathering-intensity') {
         additionalContext.initialIntensity = currentIntensity[0];
         additionalContext.currentIntensity = currentIntensity[0];
       } else {
@@ -165,131 +161,17 @@ const AIAnxietyBot = () => {
 
   const handleTappingComplete = () => {
     setIsTapping(false);
-    setChatState('gathering-post-intensity');
+    setChatState('post-tapping');
   };
 
 
-
-  // Helper function to check if failsafe buttons should be shown
-  const shouldShowFailsafeButtons = () => {
-    // Show by default, only hide when in tapping-point state (which has its own interface)
-    return chatState !== 'tapping-point';
-  };
-
-  // Render failsafe buttons as hover tapping icons
-  const renderFailsafeButtons = () => {
-    if (!shouldShowFailsafeButtons()) return null;
-
-    return (
-      <TooltipProvider>
-        <div className="border-t pt-4 mt-4">
-          <div className="text-xs text-muted-foreground text-center mb-3">
-            Manual Controls
-          </div>
-          
-          <div className="flex justify-center gap-3">
-            {/* Start Visual Tapping Icon */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={() => {
-                    if (sessionContext.initialIntensity === undefined) {
-                      triggerManualStateChange('gathering-pre-intensity');
-                    } else {
-                      triggerManualStateChange('tapping-point');
-                      setCurrentTappingPoint(0);
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
-                  aria-label="Start Visual Tapping Session"
-                >
-                  <Hand className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Start Visual Tapping</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Rate Initial Intensity Icon */}
-            {chatState !== 'gathering-pre-intensity' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => triggerManualStateChange('gathering-pre-intensity')}
-                    variant="outline"
-                    size="sm"
-                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
-                    aria-label="Rate Initial Intensity"
-                  >
-                    <Activity className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Rate Initial Intensity</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
-            {/* Resume Tapping Icon */}
-            {sessionContext.initialIntensity !== undefined && chatState !== 'tapping-point' && 
-             chatState !== 'gathering-post-intensity' && chatState !== 'tapping-breathing' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => {
-                      triggerManualStateChange('tapping-point');
-                      setCurrentTappingPoint(0);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
-                    aria-label="Resume Tapping"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Resume Tapping</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
-            {/* Rate Current Intensity Icon */}
-            {sessionContext.initialIntensity !== undefined && chatState !== 'gathering-post-intensity' && 
-             chatState !== 'tapping-point' && chatState !== 'tapping-breathing' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => triggerManualStateChange('gathering-post-intensity')}
-                    variant="outline"
-                    size="sm"
-                    className="w-10 h-10 rounded-full p-0 hover-scale transition-all duration-200 hover:bg-primary/10"
-                    aria-label="Rate Current Intensity"
-                  >
-                    <MousePointerClick className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Rate Current Intensity</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
-      </TooltipProvider>
-    );
-  };
 
   const renderInput = () => {
     // Debug: log current state
     console.log('Current chat state:', chatState);
-    console.log('Session context:', sessionContext);
     
     // Progressive tapping states with intensity sliders
-    if (chatState === 'gathering-pre-intensity' || chatState === 'gathering-post-intensity') {
+    if (chatState === 'gathering-intensity' || chatState === 'post-tapping') {
       return (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -333,56 +215,45 @@ const AIAnxietyBot = () => {
       );
     }
 
-    // Progressive tapping point state with animated illustration
+    // Progressive tapping point state
     if (chatState === 'tapping-point') {
-      const tappingPoints = [
-        { id: 'eyebrow', name: 'Eyebrow', x: 42, y: 22, description: 'Beginning of eyebrow' },
-        { id: 'side_of_eye', name: 'Side of Eye', x: 58, y: 24, description: 'Temple area' },
-        { id: 'under_eye', name: 'Under Eye', x: 50, y: 28, description: 'Bone under eye' },
-        { id: 'under_nose', name: 'Under Nose', x: 50, y: 32, description: 'Between nose and lip' },
-        { id: 'chin', name: 'Chin', x: 50, y: 38, description: 'Center of chin' },
-        { id: 'collarbone', name: 'Collarbone', x: 50, y: 48, description: 'Below collarbone' },
-        { id: 'under_arm', name: 'Under Arm', x: 35, y: 55, description: '4 inches below armpit' },
-        { id: 'top_of_head', name: 'Top of Head', x: 50, y: 15, description: 'Crown of head' }
-      ];
-      
-      const currentPoint = tappingPoints[currentTappingPoint];
-      const latestBotMessage = messages.filter(m => m.type === 'bot').pop();
+      const tappingPointNames = ['eyebrow', 'outer eye', 'under eye', 'under nose', 'chin', 'collarbone', 'under arm', 'top of head'];
+      const currentPointName = tappingPointNames[currentTappingPoint] || 'unknown';
       
       return (
-        <div className="space-y-6">
-          <AnimatedBodyIllustration
-            currentPoint={currentPoint}
-            aiText={latestBotMessage?.content || sessionContext.reminderPhrases?.[0] || "Tap gently while repeating the reminder phrase"}
-            isActive={true}
-            onTap={() => {
-              if (currentTappingPoint < 7) {
-                setCurrentTappingPoint(prev => prev + 1);
-                sendMessage(`Completed tapping ${currentPoint?.name}`, 'tapping-point');
-              } else {
-                setChatState('tapping-breathing');
-              }
-            }}
-          />
-          
-          <div className="text-center space-y-4">
-            <div className="text-sm text-muted-foreground">
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="text-sm text-muted-foreground mb-2">
               Tapping Point {currentTappingPoint + 1} of 8
             </div>
-            
+            <div className="text-lg font-semibold capitalize mb-4">
+              {currentPointName}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                How intense is the feeling now? (0-10):
+              </label>
+              <IntensitySlider
+                value={currentIntensity}
+                onValueChange={setCurrentIntensity}
+                className="w-full"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
             <Button 
               onClick={() => {
                 if (currentTappingPoint < 7) {
                   setCurrentTappingPoint(prev => prev + 1);
-                  sendMessage(`Completed tapping ${currentPoint?.name}`, 'tapping-point');
+                  handleSubmit();
                 } else {
                   setChatState('tapping-breathing');
                 }
               }}
               disabled={isLoading} 
-              className="w-full"
+              className="flex-1"
             >
-              {currentTappingPoint < 7 ? 'Next Tapping Point' : 'Complete This Round'}
+              {currentTappingPoint < 7 ? 'Next Point' : 'Complete Round'}
             </Button>
           </div>
         </div>
@@ -436,17 +307,14 @@ const AIAnxietyBot = () => {
     }
 
     return (
-      <div className="space-y-4">
-        <ChatInput
-          chatState={chatState}
-          currentInput={currentInput}
-          onInputChange={setCurrentInput}
-          onSubmit={handleSubmit}
-          onKeyPress={handleKeyPress}
-          isLoading={isLoading}
-        />
-        {renderFailsafeButtons()}
-      </div>
+      <ChatInput
+        chatState={chatState}
+        currentInput={currentInput}
+        onInputChange={setCurrentInput}
+        onSubmit={handleSubmit}
+        onKeyPress={handleKeyPress}
+        isLoading={isLoading}
+      />
     );
   };
 
@@ -515,11 +383,9 @@ const AIAnxietyBot = () => {
               bodyLocation: sessionContext.bodyLocation || '',
               initialIntensity: sessionContext.initialIntensity || 0,
               currentIntensity: sessionContext.currentIntensity || 0,
-              intensityReadings: [],
               round: sessionContext.round || 0,
               setupStatements: sessionContext.setupStatements || [],
               reminderPhrases: sessionContext.reminderPhrases || [],
-              currentTappingPoint: undefined,
               isComplete: chatState === 'complete'
             }} />
           )}

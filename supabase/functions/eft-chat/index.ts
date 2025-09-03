@@ -193,24 +193,14 @@ CURRENT STAGE GUIDANCE:`;
         systemPrompt += `
 - Say: "Thank you for sharing that, ${userName}. I want you to focus on that ${sessionContext.feeling || 'feeling'} for a moment."
 - Ask: "Can you tell me where you feel it in your body?"
-- After they respond, immediately ask: "Now I need you to rate that feeling on a scale of 0-10, where 0 means no intensity and 10 is the strongest you can imagine."
-- This is CRITICAL - you MUST ask for the rating on a scale of 0-10 to proceed
-- Wait for their body location first, then ask for the intensity rating`;
+- Common responses: chest, stomach, shoulders, throat, head
+- Acknowledge their response and prepare for intensity rating`;
         break;
-      case 'gathering-pre-intensity':
+      case 'gathering-intensity':
         systemPrompt += `
-- The user will provide a number from 0-10 for their intensity rating
-- Acknowledge their rating: "Thank you for rating that at ${sessionContext.currentIntensity || '[number]'}/10, ${userName}"
-- Now move to creating setup statements
-- Say: "Let's create some setup statements to work with. Here's the first one:"
-- Present the FIRST setup statement using their exact words`;
-        break;
-      case 'gathering-post-intensity':
-        systemPrompt += `
-- The user has provided their post-tapping intensity rating
-- Compare it with their initial rating if available: "Great! You started at ${sessionContext.initialIntensity || '[initial]'}/10 and now you're at ${sessionContext.currentIntensity || '[current]'}/10"
-- If intensity is still high (>3), suggest another round
-- If intensity is low (≤3), congratulate them and move to advice phase`;
+- Acknowledge the body location: "OK, so you feel that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'}."
+- Ask them to rate the intensity: "On a scale of 0 to 10, with 0 being no intensity and 10 being extreme intensity, how would you rate that feeling right now?"
+- Wait for their rating before proceeding to setup statements`;
         break;
       case 'creating-statements':
         systemPrompt += `
@@ -252,9 +242,15 @@ CURRENT STAGE GUIDANCE:`;
         break;
       case 'tapping-breathing':
         systemPrompt += `
+- Guide them through deep breathing: "Take a deep breath in... and breathe out"
+- Ask how they're feeling right now
+- Check if they want to continue or are ready to rate their intensity`;
+        break;
+      case 'post-tapping':
+        systemPrompt += `
 - Say: "Take a deep breath in and breathe out, ${userName}. How are you feeling now?"
-- Ask them to rate their intensity again: "Please rate that feeling again on a scale of 0-10 where 0 is no intensity and 10 is the strongest."
-- This will help us see if another round of tapping is needed
+- Ask them to re-rate their intensity: "Can you rate that feeling again on the scale of 0-10?"
+- DO NOT create new statements yet - wait for their rating first
 - Keep response focused only on getting the new intensity rating`;
         break;
       case 'advice':

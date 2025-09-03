@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService, UserProfile } from '@/services/supabaseService';
-import { ChatState, Message, IntensityReading } from '@/components/anxiety-bot/types';
+import { ChatState, Message } from '@/components/anxiety-bot/types';
 import { SecureStorage } from '@/utils/secureStorage';
 import { SpellChecker } from '@/utils/spellChecker';
 
@@ -11,15 +11,13 @@ interface SessionContext {
   bodyLocation?: string;
   initialIntensity?: number;
   currentIntensity?: number;
-  intensityReadings?: IntensityReading[];
   round?: number;
   setupStatements?: string[];
   reminderPhrases?: string[];
-  currentTappingPoint?: string;
 }
 
 interface UseAIChatProps {
-  onStateChange: (state: ChatState, isManualOverride?: boolean) => void;
+  onStateChange: (state: ChatState) => void;
   onSessionUpdate: (context: SessionContext) => void;
   onCrisisDetected?: () => void;
   onTypoCorrection?: (original: string, corrected: string) => void;
@@ -54,7 +52,6 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
   const [crisisDetected, setCrisisDetected] = useState(false);
   const [currentTappingPoint, setCurrentTappingPoint] = useState(0);
   const [intensityHistory, setIntensityHistory] = useState<number[]>([]);
-  const [isManualOverride, setIsManualOverride] = useState(false);
 
   useEffect(() => {
     loadUserProfile();
@@ -202,17 +199,9 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       }
 
       // Handle state transitions based on AI response and current state
-      // Only allow AI state transitions if not in manual override mode
-      if (!isManualOverride) {
-        const nextState = determineNextState(chatState, data.response);
-        if (nextState && nextState !== chatState) {
-          onStateChange(nextState);
-        }
-      } else {
-        // Reset manual override after certain safe transitions
-        if (chatState === 'gathering-post-intensity' || chatState === 'complete') {
-          setIsManualOverride(false);
-        }
+      const nextState = determineNextState(chatState, data.response);
+      if (nextState && nextState !== chatState) {
+        onStateChange(nextState);
       }
 
       // Update chat session in database
@@ -274,10 +263,10 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
       case 'gathering-location':
         if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
-          return 'gathering-pre-intensity';
+          return 'gathering-intensity';
         }
         break;
-      case 'gathering-pre-intensity':
+      case 'gathering-intensity':
         return 'setup-statement-1'; // Start progressive setup statements
       case 'setup-statement-1':
         if (response.includes('repeat it') || response.includes('tapping the side')) {
@@ -304,10 +293,10 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
       case 'tapping-breathing':
         if (response.includes('how are you feeling') || response.includes('ready to rate')) {
-          return 'gathering-post-intensity';
+          return 'post-tapping';
         }
         break;
-      case 'gathering-post-intensity':
+      case 'post-tapping':
         if (response.includes('amazing work') || response.includes('meditation library')) {
           return 'advice';
         }
@@ -343,11 +332,6 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
     }
   }, [userProfile]);
 
-  const triggerManualStateChange = useCallback((newState: ChatState) => {
-    setIsManualOverride(true);
-    onStateChange(newState, true);
-  }, [onStateChange]);
-
   return {
     messages,
     isLoading,
@@ -358,7 +342,6 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
     crisisDetected,
     currentTappingPoint,
     setCurrentTappingPoint,
-    intensityHistory,
-    triggerManualStateChange
+    intensityHistory
   };
 };

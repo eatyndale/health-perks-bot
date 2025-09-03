@@ -179,8 +179,8 @@ const ChatInterface = ({
           />
         );
       
-      case 'gathering-pre-intensity':
-      case 'gathering-post-intensity':
+      case 'gathering-intensity':
+      case 'post-tapping':
         return (
           <div className="space-y-4">
             <div className="px-4">
@@ -238,7 +238,7 @@ const ChatInterface = ({
               <div className="flex justify-end">
                 <Button 
                   onClick={onSubmit} 
-                  disabled={!currentInput.trim() && !['gathering-pre-intensity', 'gathering-post-intensity'].includes(chatState)}
+                  disabled={!currentInput.trim() && !['gathering-intensity', 'post-tapping'].includes(chatState)}
                   className="flex items-center bg-gradient-to-r from-[#94c11f] to-green-600 hover:from-[#7da01a] hover:to-green-700 text-white"
                 >
                   <Send className="w-4 h-4 mr-2" />

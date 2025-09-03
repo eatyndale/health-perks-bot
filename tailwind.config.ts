@@ -99,38 +99,12 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
-				},
-				'pulse-glow': {
-					'0%, 100%': {
-						opacity: '0.4',
-						transform: 'scale(1)'
-					},
-					'50%': {
-						opacity: '0.8',
-						transform: 'scale(1.1)'
-					}
-				},
-				'tap-pulse': {
-					'0%': {
-						transform: 'scale(1)',
-						opacity: '1'
-					},
-					'50%': {
-						transform: 'scale(1.3)',
-						opacity: '0.7'
-					},
-					'100%': {
-						transform: 'scale(1)',
-						opacity: '1'
-					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.6s ease-out',
-				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-				'tap-pulse': 'tap-pulse 0.8s ease-in-out infinite'
+				'fade-in': 'fade-in 0.6s ease-out'
 			}
 		}
 	},
