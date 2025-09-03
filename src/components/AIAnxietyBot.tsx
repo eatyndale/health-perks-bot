@@ -19,6 +19,7 @@ import ChatInput from "./anxiety-bot/ChatInput";
 import SessionActions from "./anxiety-bot/SessionActions";
 import ChatHeader from "./anxiety-bot/ChatHeader";
 import QuestionnaireView from "./anxiety-bot/QuestionnaireView";
+import { AnimatedBodyIllustration } from "./anxiety-bot/AnimatedBodyIllustration";
 
 
 const AIAnxietyBot = () => {
@@ -215,45 +216,56 @@ const AIAnxietyBot = () => {
       );
     }
 
-    // Progressive tapping point state
+    // Progressive tapping point state with animated illustration
     if (chatState === 'tapping-point') {
-      const tappingPointNames = ['eyebrow', 'outer eye', 'under eye', 'under nose', 'chin', 'collarbone', 'under arm', 'top of head'];
-      const currentPointName = tappingPointNames[currentTappingPoint] || 'unknown';
+      const tappingPoints = [
+        { id: 'eyebrow', name: 'Eyebrow', x: 42, y: 22, description: 'Beginning of eyebrow' },
+        { id: 'side_of_eye', name: 'Side of Eye', x: 58, y: 24, description: 'Temple area' },
+        { id: 'under_eye', name: 'Under Eye', x: 50, y: 28, description: 'Bone under eye' },
+        { id: 'under_nose', name: 'Under Nose', x: 50, y: 32, description: 'Between nose and lip' },
+        { id: 'chin', name: 'Chin', x: 50, y: 38, description: 'Center of chin' },
+        { id: 'collarbone', name: 'Collarbone', x: 50, y: 48, description: 'Below collarbone' },
+        { id: 'under_arm', name: 'Under Arm', x: 35, y: 55, description: '4 inches below armpit' },
+        { id: 'top_of_head', name: 'Top of Head', x: 50, y: 15, description: 'Crown of head' }
+      ];
+      
+      const currentPoint = tappingPoints[currentTappingPoint];
+      const latestBotMessage = messages.filter(m => m.type === 'bot').pop();
       
       return (
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-2">
+        <div className="space-y-6">
+          <AnimatedBodyIllustration
+            currentPoint={currentPoint}
+            aiText={latestBotMessage?.content || sessionContext.reminderPhrases?.[0] || "Tap gently while repeating the reminder phrase"}
+            isActive={true}
+            onTap={() => {
+              if (currentTappingPoint < 7) {
+                setCurrentTappingPoint(prev => prev + 1);
+                sendMessage(`Completed tapping ${currentPoint?.name}`, 'tapping-point');
+              } else {
+                setChatState('tapping-breathing');
+              }
+            }}
+          />
+          
+          <div className="text-center space-y-4">
+            <div className="text-sm text-muted-foreground">
               Tapping Point {currentTappingPoint + 1} of 8
             </div>
-            <div className="text-lg font-semibold capitalize mb-4">
-              {currentPointName}
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                How intense is the feeling now? (0-10):
-              </label>
-              <IntensitySlider
-                value={currentIntensity}
-                onValueChange={setCurrentIntensity}
-                className="w-full"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
+            
             <Button 
               onClick={() => {
                 if (currentTappingPoint < 7) {
                   setCurrentTappingPoint(prev => prev + 1);
-                  handleSubmit();
+                  sendMessage(`Completed tapping ${currentPoint?.name}`, 'tapping-point');
                 } else {
                   setChatState('tapping-breathing');
                 }
               }}
               disabled={isLoading} 
-              className="flex-1"
+              className="w-full"
             >
-              {currentTappingPoint < 7 ? 'Next Point' : 'Complete Round'}
+              {currentTappingPoint < 7 ? 'Next Tapping Point' : 'Complete This Round'}
             </Button>
           </div>
         </div>
