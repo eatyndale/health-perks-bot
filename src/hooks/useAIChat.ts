@@ -279,12 +279,7 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         }
         break;
       case 'setup-statement-3':
-        // After third statement, always move to tapping - make it more reliable
-        if (response.includes('tapping point') || 
-            response.includes('move through') || 
-            response.includes('now we') ||
-            response.includes('great!') ||
-            response.includes('perfect')) {
+        if (response.includes('move through the tapping points')) {
           return 'tapping-point';
         }
         break;

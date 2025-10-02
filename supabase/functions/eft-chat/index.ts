@@ -230,8 +230,7 @@ CURRENT STAGE GUIDANCE:`;
         systemPrompt += `
 - Present the THIRD setup statement: "This [emotion] in my [body location], [problem], but I want to let it go"
 - Ask them to repeat it while tapping the side of their hand
-- After confirmation, YOU MUST say EXACTLY: "Great! Now we'll move through the tapping points one by one."
-- This exact phrase is CRITICAL for the system to proceed`;
+- After confirmation, say: "Great! Now we'll move through the tapping points one by one."`;
         break;
       case 'tapping-point':
         systemPrompt += `
