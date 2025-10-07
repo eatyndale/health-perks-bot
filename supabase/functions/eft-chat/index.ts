@@ -137,17 +137,18 @@ serve(async (req) => {
     const directiveInstruction = `
 🚨 **MANDATORY DIRECTIVE FORMAT - READ THIS FIRST** 🚨
 
-You MUST end EVERY response with a machine-readable directive in this EXACT format:
+You MUST end EVERY response with a directive. The directive MUST:
+1. Be on its own line at the end
+2. Have exactly TWO closing angle brackets: >>
+3. Only include fields that have values (do NOT add null fields)
+4. Match the format shown for your current state
 
-<<DIRECTIVE {"next_state":"state_name","tapping_point":X,"setup_statements":[...],"statement_order":[...],...}>>
-
-**⚠️ CRITICAL TRANSITION: gathering-intensity → tapping-point ⚠️**
-
-When transitioning from "gathering-intensity" to "tapping-point" at point 0, you MUST:
-- Generate 3 setup statements internally using the user's exact words for their problem, feeling, and body location
-- Include them ONLY in the directive JSON (NOT in your text response)
-- NEVER mention "creating statements" or "setup statements" in your text response
-- Simply say you're ready to begin tapping and ask them to start with the first point
+**DIRECTIVE FORMAT RULES:**
+- Start with: <<DIRECTIVE 
+- Then the JSON object
+- End with: >> (exactly two angle brackets, never three >>>)
+- Do NOT include fields with null values
+- Only include the fields specified for your current state
 
 EXAMPLE RESPONSE at gathering-intensity (intensity received):
 "Thank you. Let's begin the tapping sequence. We'll start with the top of the head - tap gently there while focusing on that feeling."
@@ -219,62 +220,45 @@ CURRENT STAGE GUIDANCE:`;
         systemPrompt += `
 **CURRENT STATE: initial**
 
-This is the very first interaction with the user about their problem.
+This is the very first interaction. The user just told you their problem/emotion.
 
 **YOUR RESPONSE:**
-- Warmly greet them: "Hello ${userName}! I'm here to help you work through what you're feeling using EFT tapping."
-- Ask ONE specific question: "What would you like to work on today?"
+"I can hear that you're feeling ${sessionContext.problem || '[what they said]'}, ${userName}. That must be difficult. Can you describe this feeling a bit more? What emotion are you experiencing?"
 
-**CRITICAL RULES FOR INITIAL STATE:**
-- DO NOT ask about body location yet
-- DO NOT ask about intensity yet
-- DO NOT start tapping
-- DO NOT mention setup statements or tapping points
-- ONLY collect the basic problem/feeling
-
-**AFTER THEY RESPOND, GENERATE THIS DIRECTIVE:**
+**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
 <<DIRECTIVE {"next_state":"gathering-feeling","collect":"feeling"}>>
 
-The next state is ALWAYS gathering-feeling. No exceptions.
+Do NOT add any other fields to the directive. The next state is ALWAYS gathering-feeling.
 `;
         break;
       case 'gathering-feeling':
         systemPrompt += `
 **CURRENT STATE: gathering-feeling**
 
-The user just told you their problem/emotion.
+The user just described their emotion/feeling.
 
 **YOUR RESPONSE:**
-"I can hear that you're feeling ${sessionContext.feeling || '[emotion]'}, ${userName}. That must be difficult for you. Can you tell me where in your body you feel this ${sessionContext.feeling || 'emotion'}?"
+"Thank you for sharing, ${userName}. I can hear that you're feeling ${sessionContext.feeling || '[emotion]'}. Where in your body do you feel this ${sessionContext.feeling || 'emotion'}?"
 
-**CRITICAL RULES:**
-- DO NOT ask about intensity yet (that comes later)
-- DO NOT start tapping
-- DO NOT create setup statements
-- ONLY ask about body location
-
-**THEN GENERATE THIS DIRECTIVE:**
+**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
 <<DIRECTIVE {"next_state":"gathering-location","collect":"body_location"}>>
 
-The next state is ALWAYS gathering-location. Do not skip to gathering-intensity or tapping-point.
+Do NOT add any other fields. The next state is ALWAYS gathering-location.
 `;
         break;
       case 'gathering-location':
         systemPrompt += `
 **CURRENT STATE: gathering-location**
-**CRITICAL: The user just told you where they feel it in their body.**
 
-You are at ${sessionContext.bodyLocation || '[body location]'}.
+The user just told you where in their body they feel it.
 
-**MANDATORY NEXT STEP: Ask for intensity rating**
+**YOUR RESPONSE:**
+"Thank you, ${userName}. Now, on a scale of 0 to 10, where 0 is no intensity and 10 is maximum intensity, how intense is that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'}?"
 
-**YOUR EXACT RESPONSE (word-for-word):**
-"Thank you for sharing that, ${userName}. Now, on a scale of 0 to 10, where 0 is no intensity at all and 10 is the most intense it could possibly be, how intense is that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'} right now?"
-
-**THEN YOU MUST GENERATE THIS EXACT DIRECTIVE:**
+**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
 <<DIRECTIVE {"next_state":"gathering-intensity","collect":"intensity"}>>
 
-**DO NOT skip to tapping. DO NOT create setup statements yet. The ONLY next state is gathering-intensity.**
+Do NOT add any other fields. The next state is ALWAYS gathering-intensity.
 `;
         break;
       case 'gathering-intensity':
@@ -418,9 +402,30 @@ Gathering feeling:
     } else {
       console.log('[eft-chat] ✅ Directive found in AI response');
       // Extract and log the directive for debugging
-      const directiveMatch = aiResponse.match(/<<DIRECTIVE\s+(\{[\s\S]*?\})>>/);
+      const directiveMatch = aiResponse.match(/<<DIRECTIVE\s+(\{[\s\S]*?\})>>+/);
       if (directiveMatch) {
-        console.log('[eft-chat] Directive content:', directiveMatch[1]);
+        console.log('[eft-chat] Directive JSON:', directiveMatch[1]);
+        
+        // Validate directive format
+        try {
+          const directiveObj = JSON.parse(directiveMatch[1]);
+          console.log('[eft-chat] ✅ Directive is valid JSON');
+          console.log('[eft-chat] next_state:', directiveObj.next_state);
+          console.log('[eft-chat] collect:', directiveObj.collect);
+          
+          // Check for unnecessary null fields
+          const nullFields = Object.keys(directiveObj).filter(k => directiveObj[k] === null);
+          if (nullFields.length > 0) {
+            console.warn('[eft-chat] ⚠️ Directive contains unnecessary null fields:', nullFields);
+          }
+        } catch (e) {
+          console.error('[eft-chat] ❌ Directive JSON is malformed:', e);
+        }
+        
+        // Check for extra > brackets
+        if (aiResponse.includes('>>>')) {
+          console.warn('[eft-chat] ⚠️ AI added extra > brackets to directive');
+        }
       }
     }
 

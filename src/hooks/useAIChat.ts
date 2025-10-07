@@ -35,7 +35,7 @@ interface UseAIChatProps {
 }
 
 // Directive parsing - improved regex for robustness
-const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})>>/;
+const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})>>+/;
 
 function parseDirective(text: string): Directive | null {
   console.log('[parseDirective] Attempting to parse directive from text:', text.substring(text.length - 200));
