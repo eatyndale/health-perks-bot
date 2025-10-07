@@ -23,12 +23,13 @@ const tappingPoints: TappingPoint[] = [
 ];
 
 interface TappingGuideProps {
-  reminderPhrases: string[];
+  setupStatements: string[];  // the 3 setup statements
+  statementOrder: number[];   // length 8, values in {0,1,2}
   onComplete: () => void;
   onPointChange?: (pointIndex: number) => void;
 }
 
-const TappingGuide = ({ reminderPhrases, onComplete, onPointChange }: TappingGuideProps) => {
+const TappingGuide = ({ setupStatements, statementOrder, onComplete, onPointChange }: TappingGuideProps) => {
   const [currentPoint, setCurrentPoint] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(5);
@@ -77,6 +78,10 @@ const TappingGuide = ({ reminderPhrases, onComplete, onPointChange }: TappingGui
 
   const progress = ((currentPoint + (5 - timeRemaining) / 5) / tappingPoints.length) * 100;
   const currentTappingPoint = tappingPoints[currentPoint];
+  
+  // Get the statement for the current point
+  const statementIdx = statementOrder[currentPoint] ?? 0;
+  const statementText = setupStatements[statementIdx] || `This feeling at ${currentTappingPoint.name.toLowerCase()}`;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -167,7 +172,7 @@ const TappingGuide = ({ reminderPhrases, onComplete, onPointChange }: TappingGui
               Tap while saying:
             </p>
             <p className="text-primary font-semibold mt-1">
-              "{reminderPhrases[currentPoint] || `This feeling at ${currentTappingPoint.name.toLowerCase()}`}"
+              "{statementText}"
             </p>
           </div>
 

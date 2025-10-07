@@ -215,48 +215,15 @@ const AIAnxietyBot = () => {
       );
     }
 
-    // Progressive tapping point state
+    // Progressive tapping point state - render TappingGuide
     if (chatState === 'tapping-point') {
-      const tappingPointNames = ['eyebrow', 'outer eye', 'under eye', 'under nose', 'chin', 'collarbone', 'under arm', 'top of head'];
-      const currentPointName = tappingPointNames[currentTappingPoint] || 'unknown';
-      
       return (
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-2">
-              Tapping Point {currentTappingPoint + 1} of 8
-            </div>
-            <div className="text-lg font-semibold capitalize mb-4">
-              {currentPointName}
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                How intense is the feeling now? (0-10):
-              </label>
-              <IntensitySlider
-                value={currentIntensity}
-                onValueChange={setCurrentIntensity}
-                className="w-full"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => {
-                if (currentTappingPoint < 7) {
-                  setCurrentTappingPoint(prev => prev + 1);
-                  handleSubmit();
-                } else {
-                  setChatState('tapping-breathing');
-                }
-              }}
-              disabled={isLoading} 
-              className="flex-1"
-            >
-              {currentTappingPoint < 7 ? 'Next Point' : 'Complete Round'}
-            </Button>
-          </div>
-        </div>
+        <TappingGuide
+          setupStatements={sessionContext.setupStatements || []}
+          statementOrder={sessionContext.statementOrder || []}
+          onComplete={() => setChatState('tapping-breathing')}
+          onPointChange={setCurrentTappingPoint}
+        />
       );
     }
 

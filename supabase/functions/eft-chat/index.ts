@@ -270,7 +270,43 @@ CRITICAL RULES:
 - NEVER combine multiple steps in one response
 - Current step: ${chatState}
 - Wait for user response before moving to next step
-- Keep responses short and focused on current step only` },
+- Keep responses short and focused on current step only
+
+MACHINE DIRECTIVE (MANDATORY):
+- At the VERY END of every response, output ONE line EXACTLY like:
+  <<DIRECTIVE {"next_state":"<state>","tapping_point":<0..7 or null>,"setup_statements":<array or null>,"statement_order":<array or null>,"say_index":<0..2 or null>,"collect":"<feeling|body_location|intensity|null>","notes":""}>>
+- The JSON must be valid. No extra lines, no code fences, no explanations after it.
+
+WHEN STARTING TAPPING (point 0):
+- Provide "setup_statements": exactly 3 statements that use the user's exact words (emotion + body location + problem).
+- Provide "statement_order": an array of length 8 with values from {0,1,2} indicating which setup statement to say at each point. Randomize the order to cycle through all 3 statements.
+- Set "say_index" for point 0 to the first element of "statement_order".
+- Set "next_state": "tapping-point" and "tapping_point": 0
+
+FOR SUBSEQUENT TAPPING POINTS (1..7):
+- Omit "setup_statements" and "statement_order" (they're already stored).
+- Set "say_index" to the corresponding index from the established "statement_order".
+- Set "next_state": "tapping-point" and "tapping_point" to the current point number.
+
+AFTER POINT 7:
+- Set "next_state": "tapping-breathing", "tapping_point": null, "say_index": null
+
+WHEN NOT TAPPING:
+- "tapping_point": null, "say_index": null.
+- Use "collect" to tell the UI what to gather next ("feeling" | "body_location" | "intensity" | null).
+
+DIRECTIVE EXAMPLES:
+Starting tapping (after intensity received):
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this anxiety in my chest because of work stress, I'd like to be at peace","I feel anxious in my chest, work stress is overwhelming, but I'd like to relax now","This anxiety in my chest, from work stress, but I want to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0,"collect":null,"notes":"starting first round"}>>
+
+Mid-round (moving to point 3):
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":3,"say_index":0,"collect":null,"notes":""}>>
+
+After point 7 (move to breathing):
+<<DIRECTIVE {"next_state":"tapping-breathing","tapping_point":null,"say_index":null,"collect":"intensity","notes":"completed round"}>>
+
+Gathering feeling:
+<<DIRECTIVE {"next_state":"gathering-location","tapping_point":null,"say_index":null,"collect":"body_location","notes":""}>>` },
       // Enhanced conversation history with more context
       ...conversationHistory.slice(-20).map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',

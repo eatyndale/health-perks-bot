@@ -14,6 +14,17 @@ interface SessionContext {
   round?: number;
   setupStatements?: string[];
   reminderPhrases?: string[];
+  statementOrder?: number[];
+}
+
+interface Directive {
+  next_state?: string;
+  tapping_point?: number | null;
+  setup_statements?: string[] | null;
+  statement_order?: number[] | null;
+  say_index?: number | null;
+  collect?: string | null;
+  notes?: string;
 }
 
 interface UseAIChatProps {
@@ -23,7 +34,20 @@ interface UseAIChatProps {
   onTypoCorrection?: (original: string, corrected: string) => void;
 }
 
-// Helper function to extract setup statements from AI response
+// Directive parsing
+const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{.*?\})>>\s*$/s;
+
+function parseDirective(text: string): Directive | null {
+  const m = text.match(DIRECTIVE_RE);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+
+// Helper function to extract setup statements from AI response (legacy fallback)
 const extractSetupStatements = (response: string): string[] => {
   const statements: string[] = [];
   const lines = response.split('\n');
@@ -175,11 +199,17 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
 
       if (error) throw error;
 
-      // Add AI response
+      // Parse directive and strip it from visible content
+      const directive = parseDirective(data.response);
+      const visibleContent = directive 
+        ? data.response.replace(DIRECTIVE_RE, '').trim() 
+        : data.response;
+
+      // Add AI response with stripped content
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         type: 'bot',
-        content: data.response,
+        content: visibleContent,
         timestamp: new Date(),
         sessionId: currentChatSession
       };
@@ -188,20 +218,46 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       setMessages(finalMessages);
       setConversationHistory(finalMessages);
 
-      // Extract setup statements if we're in creating-statements state
-      if (chatState === 'creating-statements' || data.response.includes('Even though')) {
-        const setupStatements = extractSetupStatements(data.response);
-        if (setupStatements.length > 0) {
+      // Apply directive-first flow
+      if (directive) {
+        const next = directive.next_state;
+        
+        // Start-of-round: store statements + order
+        if (next === 'tapping-point' && directive.tapping_point === 0) {
+          const setupStatements = directive.setup_statements ?? updatedContext.setupStatements ?? [];
+          const statementOrder = directive.statement_order ?? updatedContext.statementOrder ?? [];
           updatedContext.setupStatements = setupStatements;
+          updatedContext.statementOrder = statementOrder;
           setSessionContext(updatedContext);
           onSessionUpdate(updatedContext);
         }
-      }
 
-      // Handle state transitions based on AI response and current state
-      const nextState = determineNextState(chatState, data.response);
-      if (nextState && nextState !== chatState) {
-        onStateChange(nextState);
+        // Point advancement: update current tapping point
+        if (next === 'tapping-point' && typeof directive.tapping_point === 'number') {
+          setCurrentTappingPoint(directive.tapping_point);
+        }
+
+        // State transition
+        if (next && next !== chatState) {
+          onStateChange(next as ChatState);
+        }
+      } else {
+        // Fallback: legacy state detection
+        // Extract setup statements if we're in creating-statements state
+        if (chatState === 'creating-statements' || data.response.includes('Even though')) {
+          const setupStatements = extractSetupStatements(data.response);
+          if (setupStatements.length > 0) {
+            updatedContext.setupStatements = setupStatements;
+            setSessionContext(updatedContext);
+            onSessionUpdate(updatedContext);
+          }
+        }
+
+        // Handle state transitions based on AI response and current state
+        const nextState = determineNextState(chatState, data.response);
+        if (nextState && nextState !== chatState) {
+          onStateChange(nextState);
+        }
       }
 
       // Update chat session in database
