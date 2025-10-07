@@ -220,9 +220,16 @@ CURRENT STAGE GUIDANCE:`;
         break;
       case 'gathering-feeling':
         systemPrompt += `
-- Ask: "What's the utmost negative emotion you're feeling right now ${userName}?"
-- Validate their response with empathy
-- Wait for them to respond with the emotion before moving to next step`;
+**CURRENT STATE: gathering-feeling**
+
+The user just told you their emotion/feeling.
+
+**YOUR RESPONSE:**
+"I can hear that you're feeling ${sessionContext.feeling || '[emotion]'}, ${userName}. That must be difficult for you. Can you tell me where in your body you feel this ${sessionContext.feeling || 'emotion'}?"
+
+**THEN GENERATE THIS DIRECTIVE:**
+<<DIRECTIVE {"next_state":"gathering-location","collect":"body_location"}>>
+`;
         break;
       case 'gathering-location':
         systemPrompt += `
@@ -245,15 +252,18 @@ This will show the intensity slider UI to the user.
 
 The user just provided their intensity rating (0-10).
 
-**YOUR TEXT RESPONSE (copy this EXACTLY):**
-"Perfect! Now let's begin the tapping. Follow along with the visual guide."
+**YOUR TEXT RESPONSE (copy this EXACTLY, nothing more):**
+"Thank you, ${userName}. Take a deep breath in... and breathe out. Let's begin the tapping now."
 
-**CRITICAL: DO NOT write out the setup statements in your text response. DO NOT say "Even though I..." or any variation. The statements are ONLY for the directive JSON below.**
+**CRITICAL RULES:**
+- DO NOT write out setup statements in your text
+- DO NOT say "Even though I..." or any variation
+- DO NOT give tapping instructions like "tap on the head", "focus on the feeling", "start with top of head"
+- The TappingGuide UI will handle ALL tapping mechanics and instructions
+- Your ONLY job is to acknowledge and transition
 
 **THEN GENERATE DIRECTIVE (statements go HERE, not in text):**
 <<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, I deeply and completely accept myself","I feel ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I choose to relax","This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
-
-The setup statements will appear in the TappingGuide UI component, NOT in your chat response.
 `;
         break;
       case 'tapping-point':
