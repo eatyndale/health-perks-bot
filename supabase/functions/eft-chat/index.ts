@@ -209,6 +209,11 @@ LANGUAGE PATTERNS:
 
 CURRENT STAGE GUIDANCE:`;
 
+    // Validate state before processing
+    console.log('[eft-chat] Processing request with state:', chatState);
+    console.log('[eft-chat] Session context:', JSON.stringify(sessionContext));
+    console.log('[eft-chat] Current tapping point:', currentTappingPoint);
+
     switch (chatState) {
       case 'initial':
         systemPrompt += `
@@ -234,16 +239,19 @@ The user just told you their emotion/feeling.
       case 'gathering-location':
         systemPrompt += `
 **CURRENT STATE: gathering-location**
+**CRITICAL: The user just told you where they feel it in their body.**
 
-The user just told you where they feel it in their body.
+You are at ${sessionContext.bodyLocation || '[body location]'}.
 
-**YOUR RESPONSE:**
+**MANDATORY NEXT STEP: Ask for intensity rating**
+
+**YOUR EXACT RESPONSE (word-for-word):**
 "Thank you for sharing that, ${userName}. Now, on a scale of 0 to 10, where 0 is no intensity at all and 10 is the most intense it could possibly be, how intense is that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'} right now?"
 
-**THEN GENERATE THIS DIRECTIVE:**
+**THEN YOU MUST GENERATE THIS EXACT DIRECTIVE:**
 <<DIRECTIVE {"next_state":"gathering-intensity","collect":"intensity"}>>
 
-This will show the intensity slider UI to the user.
+**DO NOT skip to tapping. DO NOT create setup statements yet. The ONLY next state is gathering-intensity.**
 `;
         break;
       case 'gathering-intensity':

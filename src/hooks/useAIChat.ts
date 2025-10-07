@@ -252,9 +252,30 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
           setCurrentTappingPoint(directive.tapping_point);
         }
 
-        // State transition
+        // State transition with validation
         if (next && next !== chatState) {
           console.log('[useAIChat] Transitioning state from', chatState, 'to', next);
+          
+          // Validate state transitions
+          const validTransitions: Record<string, string[]> = {
+            'initial': ['gathering-feeling'],
+            'gathering-feeling': ['gathering-location'],
+            'gathering-location': ['gathering-intensity'], // MUST go here
+            'gathering-intensity': ['tapping-point'],
+            'tapping-point': ['tapping-point', 'tapping-breathing'],
+            'tapping-breathing': ['post-tapping'],
+            'post-tapping': ['tapping-point', 'advice'],
+            'advice': ['complete']
+          };
+          
+          const allowedNextStates = validTransitions[chatState] || [];
+          if (!allowedNextStates.includes(next)) {
+            console.error(`[useAIChat] ⚠️ INVALID TRANSITION: ${chatState} → ${next}`);
+            console.error('[useAIChat] Allowed transitions:', allowedNextStates);
+            // Don't transition if invalid
+            return;
+          }
+          
           onStateChange(next as ChatState);
         }
       } else {
@@ -347,12 +368,9 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
         
       case 'gathering-location':
-        if ((response.includes('rate') || response.includes('scale')) && 
-            (response.includes('0') || response.includes('10'))) {
-          console.log('[determineNextState] Transition: gathering-location → gathering-intensity');
-          return 'gathering-intensity';
-        }
-        break;
+        // Always transition to gathering-intensity after location is provided
+        console.log('[determineNextState] Transition: gathering-location → gathering-intensity (automatic)');
+        return 'gathering-intensity';
         
       case 'gathering-intensity':
         if (response.includes('tapping') || response.includes('visual guide') || response.includes('follow along')) {
