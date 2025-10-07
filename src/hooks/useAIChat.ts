@@ -36,6 +36,9 @@ interface UseAIChatProps {
 
 // Directive parsing - improved regex for robustness
 const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})>>+/;
+const DIRECTIVE_FALLBACK_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})\}+/;
+// Pattern to strip ANY directive format from visible text
+const DIRECTIVE_STRIP_RE = /<<DIRECTIVE\s+\{[\s\S]*?\}[\}>]+/g;
 
 function parseDirective(text: string): Directive | null {
   console.log('[parseDirective] Attempting to parse directive from text:', text.substring(text.length - 200));
@@ -46,8 +49,7 @@ function parseDirective(text: string): Directive | null {
   // Fallback: try to match directives with }} instead of >> (common AI mistake)
   if (!m) {
     console.warn('[parseDirective] Primary pattern failed, trying fallback for }} instead of >>');
-    const fallbackRe = /<<DIRECTIVE\s+(\{[\s\S]*?\})\}+/;
-    m = text.match(fallbackRe);
+    m = text.match(DIRECTIVE_FALLBACK_RE);
     if (m) {
       console.warn('[parseDirective] ✓ Found directive with }} instead of >> - fixing it');
     }
@@ -223,9 +225,8 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
 
       // Parse directive and strip it from visible content
       const directive = parseDirective(data.response);
-      const visibleContent = directive 
-        ? data.response.replace(DIRECTIVE_RE, '').trim() 
-        : data.response;
+      // Strip ALL directive formats from visible text (handles >>, }}, >>> variants)
+      const visibleContent = data.response.replace(DIRECTIVE_STRIP_RE, '').trim();
 
       console.log('[useAIChat] AI Response received. Has directive:', !!directive);
       console.log('[useAIChat] Current state:', chatState);
