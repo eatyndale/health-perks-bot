@@ -322,69 +322,110 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
   }, [messages, userProfile, currentChatSession, sessionContext, conversationHistory, onStateChange, onSessionUpdate, onCrisisDetected]);
 
   const determineNextState = (currentState: ChatState, aiResponse: string): ChatState | null => {
-    // Enhanced state transitions for progressive flow
+    console.log('[determineNextState] FALLBACK LOGIC - Current state:', currentState);
+    console.log('[determineNextState] AI response preview:', aiResponse.substring(0, 150));
+    
     const response = aiResponse.toLowerCase();
     
-    // Progressive state-based transitions
+    // Explicit state machine with keyword detection
     switch (currentState) {
       case 'initial':
-        if (response.includes('what\'s the utmost negative emotion') || response.includes('what are you feeling')) {
+        if (response.includes('what\'s the utmost negative emotion') || 
+            response.includes('what are you feeling') ||
+            response.includes('feeling right now')) {
+          console.log('[determineNextState] Transition: initial → gathering-feeling');
           return 'gathering-feeling';
         }
         break;
+        
       case 'gathering-feeling':
-        if (response.includes('where do you feel it') || response.includes('feel it in your body')) {
+        if (response.includes('where do you feel it') || 
+            response.includes('feel it in your body') ||
+            response.includes('where in your body')) {
+          console.log('[determineNextState] Transition: gathering-feeling → gathering-location');
           return 'gathering-location';
         }
         break;
+        
       case 'gathering-location':
-        if (response.includes('rate') && response.includes('scale') && (response.includes('0') && response.includes('10'))) {
+        if ((response.includes('rate') || response.includes('scale')) && 
+            (response.includes('0') || response.includes('10'))) {
+          console.log('[determineNextState] Transition: gathering-location → gathering-intensity');
           return 'gathering-intensity';
         }
         break;
+        
       case 'gathering-intensity':
-        return 'setup-statement-1'; // Start progressive setup statements
+        console.log('[determineNextState] Transition: gathering-intensity → setup-statement-1');
+        return 'setup-statement-1';
+        
       case 'setup-statement-1':
-        if (response.includes('repeat it') || response.includes('tapping the side')) {
+        if (response.includes('repeat it') || 
+            response.includes('tapping the side') ||
+            response.includes('karate chop')) {
+          console.log('[determineNextState] Transition: setup-statement-1 → setup-statement-2');
           return 'setup-statement-2';
         }
         break;
+        
       case 'setup-statement-2':
-        if (response.includes('repeat it') || response.includes('tapping the side')) {
+        if (response.includes('repeat it') || 
+            response.includes('tapping the side') ||
+            response.includes('karate chop')) {
+          console.log('[determineNextState] Transition: setup-statement-2 → setup-statement-3');
           return 'setup-statement-3';
         }
         break;
+        
       case 'setup-statement-3':
-        if (response.includes('move through the tapping points')) {
+        // CRITICAL: This should transition to tapping-point with statements
+        if (response.includes('move through the tapping points') || 
+            response.includes('tapping points') ||
+            response.includes('top of the head')) {
+          console.log('[determineNextState] Transition: setup-statement-3 → tapping-point');
+          console.log('[determineNextState] ⚠️ WARNING: Using fallback - directive should have handled this!');
           return 'tapping-point';
         }
         break;
+        
       case 'tapping-point':
-        // Progress through tapping points one by one
         if (currentTappingPoint < 7) {
-          return 'tapping-point'; // Continue with next point
+          console.log('[determineNextState] Continue tapping-point, current point:', currentTappingPoint);
+          return 'tapping-point';
         } else {
-          return 'tapping-breathing'; // All points done, move to breathing
+          console.log('[determineNextState] Transition: tapping-point → tapping-breathing');
+          return 'tapping-breathing';
         }
-        break;
+        
       case 'tapping-breathing':
-        if (response.includes('how are you feeling') || response.includes('ready to rate')) {
+        if (response.includes('how are you feeling') || 
+            response.includes('ready to rate') ||
+            response.includes('deep breath')) {
+          console.log('[determineNextState] Transition: tapping-breathing → post-tapping');
           return 'post-tapping';
         }
         break;
+        
       case 'post-tapping':
-        if (response.includes('amazing work') || response.includes('meditation library')) {
-          return 'advice';
-        }
-        // If intensity is still high, restart the setup process
+        // Check if intensity is still high
         if (sessionContext.currentIntensity && sessionContext.currentIntensity > 3) {
+          console.log('[determineNextState] High intensity, restarting: post-tapping → setup-statement-1');
           return 'setup-statement-1';
         }
+        if (response.includes('amazing work') || 
+            response.includes('meditation library') ||
+            response.includes('well done')) {
+          console.log('[determineNextState] Transition: post-tapping → advice');
+          return 'advice';
+        }
         break;
+        
       case 'advice':
+        console.log('[determineNextState] Transition: advice → complete');
         return 'complete';
     }
     
+    console.log('[determineNextState] No transition detected, staying in:', currentState);
     return null;
   };
 

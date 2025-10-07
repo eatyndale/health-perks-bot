@@ -131,8 +131,45 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    // ============================================================================
+    // CRITICAL: DIRECTIVE FORMAT INSTRUCTION (MUST BE FIRST!)
+    // ============================================================================
+    const directiveInstruction = `
+🚨 **MANDATORY DIRECTIVE FORMAT - READ THIS FIRST** 🚨
+
+You MUST end EVERY response with a machine-readable directive in this EXACT format:
+
+<<DIRECTIVE {"next_state":"state_name","tapping_point":X,"setup_statements":[...],"statement_order":[...],...}>>
+
+**⚠️ CRITICAL TRANSITION: setup-statement-3 → tapping-point ⚠️**
+
+When transitioning from "setup-statement-3" to "tapping-point" at point 0, you MUST include:
+- "next_state": "tapping-point"
+- "tapping_point": 0
+- "setup_statements": [array of 3 setup statements using user's exact words]
+- "statement_order": [0,1,2,0,1,2,1,0] (8 indices for 8 tapping points)
+
+EXAMPLE RESPONSE at setup-statement-3:
+"Great! Now we'll move through the tapping points one by one. Let's start with the top of the head."
+
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I have this anxiety in my chest, I'd like to be at peace","I feel anxious in my chest, but I'd like to relax now","This anxiety in my chest, but I want to let it go"],"statement_order":[0,1,2,0,1,2,1,0]}>>
+
+**Key State Transitions (ALL REQUIRE DIRECTIVES):**
+- gathering-intensity → setup-statement-1: {"next_state":"setup-statement-1"}
+- setup-statement-1 → setup-statement-2: {"next_state":"setup-statement-2"}
+- setup-statement-2 → setup-statement-3: {"next_state":"setup-statement-3"}
+- setup-statement-3 → tapping-point (point 0): {"next_state":"tapping-point","tapping_point":0,"setup_statements":[...],"statement_order":[...]} ⚠️ MUST INCLUDE ARRAYS
+- tapping-point (points 0-7): {"next_state":"tapping-point","tapping_point":N} (N=0 to 7)
+- tapping-point (point 7) → tapping-breathing: {"next_state":"tapping-breathing"}
+- tapping-breathing → post-tapping: {"next_state":"post-tapping"}
+
+NEVER FORGET THE DIRECTIVE. IT MUST BE IN EVERY SINGLE RESPONSE.
+`;
+
     // Build enhanced context-aware system prompt
-    let systemPrompt = `You are an empathetic EFT (Emotional Freedom Techniques) tapping assistant trained in proper therapeutic protocols. Your role is to guide users through anxiety management using professional EFT tapping techniques.
+    let systemPrompt = `${directiveInstruction}
+
+You are an empathetic EFT (Emotional Freedom Techniques) tapping assistant trained in proper therapeutic protocols. Your role is to guide users through anxiety management using professional EFT tapping techniques.
 
 USER CONTEXT:
 - User's name: ${sanitizedUserName}
@@ -336,6 +373,25 @@ Gathering feeling:
     }
 
     const aiResponse = data.choices[0].message.content;
+    
+    console.log('[eft-chat] Generated AI response (preview):', aiResponse.substring(0, 200));
+    console.log('[eft-chat] Response length:', aiResponse.length);
+    
+    // 🚨 VALIDATION: Check if directive is present
+    if (!aiResponse.includes('<<DIRECTIVE')) {
+      console.error('⚠️⚠️⚠️ AI RESPONSE MISSING DIRECTIVE ⚠️⚠️⚠️');
+      console.error('[eft-chat] Current state:', sanitizedChatState);
+      console.error('[eft-chat] Current tapping point:', currentTappingPoint);
+      console.error('[eft-chat] Full AI response:', aiResponse);
+      console.error('[eft-chat] This will cause UI issues - fallback logic will be needed');
+    } else {
+      console.log('[eft-chat] ✅ Directive found in AI response');
+      // Extract and log the directive for debugging
+      const directiveMatch = aiResponse.match(/<<DIRECTIVE\s+(\{[\s\S]*?\})>>/);
+      if (directiveMatch) {
+        console.log('[eft-chat] Directive content:', directiveMatch[1]);
+      }
+    }
 
     // Enhanced crisis detection with expanded keywords and phrases
     const crisisKeywords = [

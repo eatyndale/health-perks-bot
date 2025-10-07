@@ -217,31 +217,57 @@ const AIAnxietyBot = () => {
 
     // Progressive tapping point state - render TappingGuide
     if (chatState === 'tapping-point') {
-      console.log('[AIAnxietyBot] Rendering tapping-point state');
+      console.log('[AIAnxietyBot] 🎯 Rendering tapping-point state');
+      console.log('[AIAnxietyBot] Current tapping point:', currentTappingPoint);
       console.log('[AIAnxietyBot] Setup statements:', sessionContext.setupStatements);
       console.log('[AIAnxietyBot] Statement order:', sessionContext.statementOrder);
+      console.log('[AIAnxietyBot] Full session context:', sessionContext);
       
       // Safety check: ensure we have data
       if (!sessionContext.setupStatements || sessionContext.setupStatements.length === 0) {
         return (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Missing tapping data.</strong> Please restart the session or continue with the conversation.
-            </p>
-            <Button onClick={startNewSession} className="mt-2">
-              Start New Session
-            </Button>
+          <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-destructive mb-1">
+                ⚠️ Missing Tapping Data
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Current state: <span className="font-mono">{chatState}</span> | Point: {currentTappingPoint}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                The AI didn't provide the required setup statements and statement order. This is likely a temporary issue.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={startNewSession} size="sm" variant="outline">
+                Start New Session
+              </Button>
+              <Button 
+                onClick={async () => {
+                  console.log('[AIAnxietyBot] User skipping tapping, moving to breathing');
+                  setChatState('tapping-breathing');
+                }} 
+                size="sm"
+              >
+                Skip to Breathing
+              </Button>
+            </div>
           </div>
         );
       }
       
       return (
-        <TappingGuide
-          setupStatements={sessionContext.setupStatements}
-          statementOrder={sessionContext.statementOrder || [0, 1, 2, 0, 1, 2, 0, 1]}
-          onComplete={() => setChatState('tapping-breathing')}
-          onPointChange={setCurrentTappingPoint}
-        />
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground">
+            State: <span className="font-mono">{chatState}</span> | Point: {currentTappingPoint}/7
+          </div>
+          <TappingGuide
+            setupStatements={sessionContext.setupStatements}
+            statementOrder={sessionContext.statementOrder || [0, 1, 2, 0, 1, 2, 0, 1]}
+            onComplete={() => setChatState('tapping-breathing')}
+            onPointChange={setCurrentTappingPoint}
+          />
+        </div>
       );
     }
 
