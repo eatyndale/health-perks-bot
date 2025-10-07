@@ -260,18 +260,21 @@ You are at ${sessionContext.bodyLocation || '[body location]'}.
 
 The user just provided their intensity rating (0-10).
 
-**YOUR TEXT RESPONSE (copy this EXACTLY, nothing more):**
+**YOUR TEXT RESPONSE (EXACT WORDING - NO ADDITIONS):**
 "Thank you, ${userName}. Take a deep breath in... and breathe out. Let's begin the tapping now."
 
-**CRITICAL RULES:**
-- DO NOT write out setup statements in your text
-- DO NOT say "Even though I..." or any variation
-- DO NOT give tapping instructions like "tap on the head", "focus on the feeling", "start with top of head"
-- The TappingGuide UI will handle ALL tapping mechanics and instructions
-- Your ONLY job is to acknowledge and transition
+**❌ ABSOLUTELY FORBIDDEN - DO NOT INCLUDE IN YOUR TEXT:**
+- DO NOT write "Even though I..." or any setup statements
+- DO NOT say "tap on the head" or "start with the top of head"
+- DO NOT give ANY tapping instructions like "focus on the feeling" or "tap gently"
+- DO NOT describe tapping points or body locations
+- DO NOT mention setup statements in your text
+- The TappingGuide UI component will handle ALL tapping mechanics, visuals, and instructions
 
-**THEN GENERATE DIRECTIVE (statements go HERE, not in text):**
+**✅ REQUIRED - GENERATE THIS DIRECTIVE (setup statements go in JSON, NOT in text):**
 <<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, I deeply and completely accept myself","I feel ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I choose to relax","This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
+
+The directive JSON contains ALL the tapping data. Your text response is ONLY for emotional acknowledgment and transition.
 `;
         break;
       case 'tapping-point':

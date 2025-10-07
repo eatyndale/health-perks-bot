@@ -256,11 +256,11 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         if (next && next !== chatState) {
           console.log('[useAIChat] Transitioning state from', chatState, 'to', next);
           
-          // Validate state transitions
+          // Validate state transitions (warning only, don't block)
           const validTransitions: Record<string, string[]> = {
             'initial': ['gathering-feeling'],
             'gathering-feeling': ['gathering-location'],
-            'gathering-location': ['gathering-intensity'], // MUST go here
+            'gathering-location': ['gathering-intensity'],
             'gathering-intensity': ['tapping-point'],
             'tapping-point': ['tapping-point', 'tapping-breathing'],
             'tapping-breathing': ['post-tapping'],
@@ -270,12 +270,12 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
           
           const allowedNextStates = validTransitions[chatState] || [];
           if (!allowedNextStates.includes(next)) {
-            console.error(`[useAIChat] ⚠️ INVALID TRANSITION: ${chatState} → ${next}`);
-            console.error('[useAIChat] Allowed transitions:', allowedNextStates);
-            // Don't transition if invalid
-            return;
+            console.warn(`[useAIChat] ⚠️ UNEXPECTED TRANSITION: ${chatState} → ${next}`);
+            console.warn('[useAIChat] Expected transitions:', allowedNextStates);
+            console.warn('[useAIChat] Allowing transition anyway - trusting AI directive');
           }
           
+          // Always allow the transition
           onStateChange(next as ChatState);
         }
       } else {
