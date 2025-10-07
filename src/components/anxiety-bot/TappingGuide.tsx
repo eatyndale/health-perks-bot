@@ -34,7 +34,7 @@ const TappingGuide = ({ setupStatements, statementOrder, onComplete, onPointChan
   
   const [currentPoint, setCurrentPoint] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(5);
+  const [timeRemaining, setTimeRemaining] = useState(15);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -57,7 +57,7 @@ const TappingGuide = ({ setupStatements, statementOrder, onComplete, onPointChan
   const handleNext = () => {
     if (currentPoint < tappingPoints.length - 1) {
       setCurrentPoint(prev => prev + 1);
-      setTimeRemaining(5);
+      setTimeRemaining(15);
     } else {
       setIsPlaying(false);
       onComplete();
@@ -74,11 +74,11 @@ const TappingGuide = ({ setupStatements, statementOrder, onComplete, onPointChan
 
   const handleReset = () => {
     setCurrentPoint(0);
-    setTimeRemaining(5);
+    setTimeRemaining(15);
     setIsPlaying(false);
   };
 
-  const progress = ((currentPoint + (5 - timeRemaining) / 5) / tappingPoints.length) * 100;
+  const progress = ((currentPoint + (15 - timeRemaining) / 15) / tappingPoints.length) * 100;
   const currentTappingPoint = tappingPoints[currentPoint];
   
   // Get the statement for the current point

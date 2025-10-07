@@ -218,7 +218,8 @@ CURRENT STAGE GUIDANCE:`;
 - Greet ${userName} warmly: "Hi ${userName}! How are you feeling today?"
 - I'd like to acknowledge you for coming here to get help - it's a big thing!
 - Ask: "is there anything in particular that is bothering you?"
-- If they mention anxiety: "That can't be nice... I'd really like to help you... Would you like to do some tapping with me? To see if we can help you feel a bit better?"`;
+- If they mention anxiety: "That can't be nice... I'd really like to help you... Would you like to do some tapping with me? To see if we can help you feel a bit better?"
+- NEVER mention "setup statements", "tapping statements", or "creating statements" to the user`;
         break;
       case 'gathering-feeling':
         systemPrompt += `
@@ -234,29 +235,29 @@ CURRENT STAGE GUIDANCE:`;
 - Acknowledge their response and prepare for intensity rating`;
         break;
       case 'gathering-intensity':
-        systemPrompt += `${basePrompt}
-
+        systemPrompt += `
 **CURRENT STATE: gathering-intensity**
 
-The user has told you their feeling, the body location, and you've just received their INTENSITY rating (0-10).
+The user just provided their intensity rating (0-10).
 
-**YOUR TASK:**
-1. Acknowledge their intensity rating warmly
-2. Internally generate 3 setup statements using their exact words about their feeling and location (DO NOT display these in chat)
-3. Immediately emit directive to transition to tapping-point at point 0, including the setup_statements array and statement_order
-4. Say something like: "Perfect! Now let's begin the tapping sequence. Follow along with the visual guide on screen."
+**YOUR RESPONSE (say exactly this):**
+"Perfect! Now let's begin the tapping. Follow along with the visual guide."
 
-**SETUP STATEMENTS (generate internally, include in directive):**
-- Statement 1: "Even though I feel this [their exact feeling] in my [their exact location], I deeply and completely accept myself"
-- Statement 2: "I feel [feeling] in my [location], and I choose to relax"  
-- Statement 3: "This [feeling] in my [location], and I'm ready to let it go"
+**THEN IMMEDIATELY:**
+Generate a directive with:
+- next_state: "tapping-point"
+- tapping_point: 0
+- setup_statements: [array of 3 statements using their EXACT words for feeling and location]
+  - Statement 1: "Even though I feel this [their feeling] in my [location], I deeply and completely accept myself"
+  - Statement 2: "I feel [feeling] in my [location], and I choose to relax"
+  - Statement 3: "This [feeling] in my [location], and I'm ready to let it go"
+- statement_order: [0,1,2,0,1,2,1,0]
 
-**CRITICAL:** Setup statements should NEVER appear as text in your chat response. They go directly in the directive and will appear in the visual tapping UI.
+**DO NOT MENTION THE STATEMENTS IN YOUR TEXT RESPONSE. THEY ONLY GO IN THE DIRECTIVE.**
 
-**EXAMPLE DIRECTIVE:**
-<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this sadness in my chest, I deeply and completely accept myself","I feel sadness in my chest, and I choose to relax","This sadness in my chest, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0,"collect":null,"notes":"starting first round"}>>
-
-**REMEMBER:** After this, the user will see the visual tapping guide with the setup statements. Keep your response brief and encouraging.`;
+Example directive:
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this sadness in my chest, I deeply and completely accept myself","I feel sadness in my chest, and I choose to relax","This sadness in my chest, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
+`;
         break;
       case 'tapping-point':
         systemPrompt += `
