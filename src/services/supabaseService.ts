@@ -169,6 +169,20 @@ class SupabaseService {
     return { session: data.session, error };
   }
 
+  async resetPasswordForEmail(email: string): Promise<{ error: any }> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    return { error };
+  }
+
+  async updatePassword(newPassword: string): Promise<{ error: any }> {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    return { error };
+  }
+
   // Profile management
   async getProfile(userId: string): Promise<{ profile: UserProfile | null; error: any }> {
     const { data, error } = await supabase
