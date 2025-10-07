@@ -39,17 +39,32 @@ const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})>>+/;
 
 function parseDirective(text: string): Directive | null {
   console.log('[parseDirective] Attempting to parse directive from text:', text.substring(text.length - 200));
-  const m = text.match(DIRECTIVE_RE);
+  
+  // Try primary pattern first
+  let m = text.match(DIRECTIVE_RE);
+  
+  // Fallback: try to match directives with }} instead of >> (common AI mistake)
+  if (!m) {
+    console.warn('[parseDirective] Primary pattern failed, trying fallback for }} instead of >>');
+    const fallbackRe = /<<DIRECTIVE\s+(\{[\s\S]*?\})\}+/;
+    m = text.match(fallbackRe);
+    if (m) {
+      console.warn('[parseDirective] ✓ Found directive with }} instead of >> - fixing it');
+    }
+  }
+  
   if (!m) {
     console.log('[parseDirective] No directive found in response');
     return null;
   }
+  
   try {
     const parsed = JSON.parse(m[1]);
     console.log('[parseDirective] Successfully parsed directive:', parsed);
     return parsed;
   } catch (e) {
     console.error('[parseDirective] Failed to parse directive JSON:', e);
+    console.error('[parseDirective] Attempted to parse:', m[1]);
     return null;
   }
 }

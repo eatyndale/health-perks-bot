@@ -135,20 +135,24 @@ serve(async (req) => {
     // CRITICAL: DIRECTIVE FORMAT INSTRUCTION (MUST BE FIRST!)
     // ============================================================================
     const directiveInstruction = `
-🚨 **MANDATORY DIRECTIVE FORMAT - READ THIS FIRST** 🚨
+🚨 **CRITICAL: DIRECTIVE FORMAT** 🚨
 
-You MUST end EVERY response with a directive. The directive MUST:
-1. Be on its own line at the end
-2. Have exactly TWO closing angle brackets: >>
-3. Only include fields that have values (do NOT add null fields)
-4. Match the format shown for your current state
+EVERY response MUST end with a directive using this EXACT format:
 
-**DIRECTIVE FORMAT RULES:**
-- Start with: <<DIRECTIVE 
-- Then the JSON object
-- End with: >> (exactly two angle brackets, never three >>>)
-- Do NOT include fields with null values
-- Only include the fields specified for your current state
+<<DIRECTIVE {JSON_OBJECT_HERE}>>
+
+**⚠️ COMMON MISTAKES TO AVOID:**
+❌ WRONG: <<DIRECTIVE {...}}}     (closing braces instead of brackets)
+❌ WRONG: <<DIRECTIVE {...}>>>    (three brackets instead of two)
+❌ WRONG: <<DIRECTIVE{...}>>      (missing space after DIRECTIVE)
+✅ CORRECT: <<DIRECTIVE {...}>>   (two angle brackets >>)
+
+The directive closing MUST be >> (two greater-than signs), NOT }} (braces).
+
+**EXAMPLE:**
+<<DIRECTIVE {"next_state":"gathering-feeling","collect":"feeling"}>>
+                                                                  ^^
+                                                                  These must be angle brackets, not braces!
 
 EXAMPLE RESPONSE at gathering-intensity (intensity received):
 "Thank you. Let's begin the tapping sequence. We'll start with the top of the head - tap gently there while focusing on that feeling."
@@ -220,68 +224,64 @@ CURRENT STAGE GUIDANCE:`;
         systemPrompt += `
 **CURRENT STATE: initial**
 
-This is the very first interaction. The user just told you their problem/emotion.
+This is the first message from the user.
 
-**YOUR RESPONSE:**
-"I can hear that you're feeling ${sessionContext.problem || '[what they said]'}, ${userName}. That must be difficult. Can you describe this feeling a bit more? What emotion are you experiencing?"
+**IF they just said hi/hello (greeting only):**
+"Hello ${userName}! I'm here to help you work through what you're feeling using EFT tapping. What would you like to work on today?"
+<<DIRECTIVE {"next_state":"initial","collect":"problem"}>>
 
-**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
+**IF they shared a problem/feeling:**
+"I can hear that you're experiencing ${sessionContext.problem || '[what they said]'}, ${userName}. Can you describe the main emotion you're feeling right now?"
 <<DIRECTIVE {"next_state":"gathering-feeling","collect":"feeling"}>>
 
-Do NOT add any other fields to the directive. The next state is ALWAYS gathering-feeling.
+**CRITICAL:** The closing must be >> (two angle brackets), NOT }} (braces).
 `;
         break;
       case 'gathering-feeling':
         systemPrompt += `
 **CURRENT STATE: gathering-feeling**
 
-The user just described their emotion/feeling.
+The user described their emotion: ${sessionContext.feeling || '[emotion]'}
 
 **YOUR RESPONSE:**
 "Thank you for sharing, ${userName}. I can hear that you're feeling ${sessionContext.feeling || '[emotion]'}. Where in your body do you feel this ${sessionContext.feeling || 'emotion'}?"
 
-**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
+**DIRECTIVE (copy exactly, check the closing):**
 <<DIRECTIVE {"next_state":"gathering-location","collect":"body_location"}>>
 
-Do NOT add any other fields. The next state is ALWAYS gathering-location.
+Remember: Must end with >> (angle brackets), NOT }} (braces).
 `;
         break;
       case 'gathering-location':
         systemPrompt += `
 **CURRENT STATE: gathering-location**
 
-The user just told you where in their body they feel it.
+Body location: ${sessionContext.bodyLocation || '[body location]'}
 
 **YOUR RESPONSE:**
 "Thank you, ${userName}. Now, on a scale of 0 to 10, where 0 is no intensity and 10 is maximum intensity, how intense is that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'}?"
 
-**THEN COPY THIS DIRECTIVE EXACTLY (no extra > brackets):**
+**DIRECTIVE (copy exactly, check the closing):**
 <<DIRECTIVE {"next_state":"gathering-intensity","collect":"intensity"}>>
 
-Do NOT add any other fields. The next state is ALWAYS gathering-intensity.
+Remember: Must end with >> (angle brackets), NOT }} (braces).
 `;
         break;
       case 'gathering-intensity':
         systemPrompt += `
 **CURRENT STATE: gathering-intensity**
 
-The user just provided their intensity rating (0-10).
+Intensity: ${sessionContext.currentIntensity || sessionContext.initialIntensity || 'N/A'}
 
-**YOUR TEXT RESPONSE (EXACT WORDING - NO ADDITIONS):**
+**YOUR TEXT (keep it simple):**
 "Thank you, ${userName}. Take a deep breath in... and breathe out. Let's begin the tapping now."
 
-**❌ ABSOLUTELY FORBIDDEN - DO NOT INCLUDE IN YOUR TEXT:**
-- DO NOT write "Even though I..." or any setup statements
-- DO NOT say "tap on the head" or "start with the top of head"
-- DO NOT give ANY tapping instructions like "focus on the feeling" or "tap gently"
-- DO NOT describe tapping points or body locations
-- DO NOT mention setup statements in your text
-- The TappingGuide UI component will handle ALL tapping mechanics, visuals, and instructions
+**DO NOT include tapping instructions in your text - the UI handles that.**
 
-**✅ REQUIRED - GENERATE THIS DIRECTIVE (setup statements go in JSON, NOT in text):**
-<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, I deeply and completely accept myself","I feel ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I choose to relax","This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
+**DIRECTIVE (critical - must end with >> not }}):**
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel ${sessionContext.feeling || 'this feeling'} in my ${sessionContext.bodyLocation || 'body'}, I deeply and completely accept myself","I feel ${sessionContext.feeling || 'this feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I choose to relax","This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
 
-The directive JSON contains ALL the tapping data. Your text response is ONLY for emotional acknowledgment and transition.
+**VERIFY:** The directive MUST end with >> (two angle brackets), NOT }} (two braces)!
 `;
         break;
       case 'tapping-point':
@@ -422,9 +422,16 @@ Gathering feeling:
           console.error('[eft-chat] ❌ Directive JSON is malformed:', e);
         }
         
-        // Check for extra > brackets
+        // Check for common directive format mistakes
         if (aiResponse.includes('>>>')) {
-          console.warn('[eft-chat] ⚠️ AI added extra > brackets to directive');
+          console.error('[eft-chat] ❌ CRITICAL: AI used three brackets >>> instead of two >>');
+        }
+        
+        // Check for braces instead of brackets (most common mistake)
+        const bracePattern = /<<DIRECTIVE\s+\{[^}]*\}\}(?!>)/;
+        if (bracePattern.test(aiResponse)) {
+          console.error('[eft-chat] ❌ CRITICAL: AI used closing braces }} instead of angle brackets >>');
+          console.error('[eft-chat] This will cause parsing to fail!');
         }
       }
     }
