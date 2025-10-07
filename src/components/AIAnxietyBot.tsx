@@ -217,10 +217,28 @@ const AIAnxietyBot = () => {
 
     // Progressive tapping point state - render TappingGuide
     if (chatState === 'tapping-point') {
+      console.log('[AIAnxietyBot] Rendering tapping-point state');
+      console.log('[AIAnxietyBot] Setup statements:', sessionContext.setupStatements);
+      console.log('[AIAnxietyBot] Statement order:', sessionContext.statementOrder);
+      
+      // Safety check: ensure we have data
+      if (!sessionContext.setupStatements || sessionContext.setupStatements.length === 0) {
+        return (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>Missing tapping data.</strong> Please restart the session or continue with the conversation.
+            </p>
+            <Button onClick={startNewSession} className="mt-2">
+              Start New Session
+            </Button>
+          </div>
+        );
+      }
+      
       return (
         <TappingGuide
-          setupStatements={sessionContext.setupStatements || []}
-          statementOrder={sessionContext.statementOrder || []}
+          setupStatements={sessionContext.setupStatements}
+          statementOrder={sessionContext.statementOrder || [0, 1, 2, 0, 1, 2, 0, 1]}
           onComplete={() => setChatState('tapping-breathing')}
           onPointChange={setCurrentTappingPoint}
         />

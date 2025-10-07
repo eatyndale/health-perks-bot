@@ -34,15 +34,22 @@ interface UseAIChatProps {
   onTypoCorrection?: (original: string, corrected: string) => void;
 }
 
-// Directive parsing
-const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{.*?\})>>\s*$/s;
+// Directive parsing - improved regex for robustness
+const DIRECTIVE_RE = /<<DIRECTIVE\s+(\{[\s\S]*?\})>>/;
 
 function parseDirective(text: string): Directive | null {
+  console.log('[parseDirective] Attempting to parse directive from text:', text.substring(text.length - 200));
   const m = text.match(DIRECTIVE_RE);
-  if (!m) return null;
+  if (!m) {
+    console.log('[parseDirective] No directive found in response');
+    return null;
+  }
   try {
-    return JSON.parse(m[1]);
-  } catch {
+    const parsed = JSON.parse(m[1]);
+    console.log('[parseDirective] Successfully parsed directive:', parsed);
+    return parsed;
+  } catch (e) {
+    console.error('[parseDirective] Failed to parse directive JSON:', e);
     return null;
   }
 }
@@ -205,6 +212,9 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         ? data.response.replace(DIRECTIVE_RE, '').trim() 
         : data.response;
 
+      console.log('[useAIChat] AI Response received. Has directive:', !!directive);
+      console.log('[useAIChat] Current state:', chatState);
+
       // Add AI response with stripped content
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
@@ -221,11 +231,15 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       // Apply directive-first flow
       if (directive) {
         const next = directive.next_state;
+        console.log('[useAIChat] Directive next_state:', next);
+        console.log('[useAIChat] Directive tapping_point:', directive.tapping_point);
         
         // Start-of-round: store statements + order
         if (next === 'tapping-point' && directive.tapping_point === 0) {
           const setupStatements = directive.setup_statements ?? updatedContext.setupStatements ?? [];
           const statementOrder = directive.statement_order ?? updatedContext.statementOrder ?? [];
+          console.log('[useAIChat] Storing setup statements:', setupStatements);
+          console.log('[useAIChat] Storing statement order:', statementOrder);
           updatedContext.setupStatements = setupStatements;
           updatedContext.statementOrder = statementOrder;
           setSessionContext(updatedContext);
@@ -234,28 +248,34 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
 
         // Point advancement: update current tapping point
         if (next === 'tapping-point' && typeof directive.tapping_point === 'number') {
+          console.log('[useAIChat] Setting tapping point to:', directive.tapping_point);
           setCurrentTappingPoint(directive.tapping_point);
         }
 
         // State transition
         if (next && next !== chatState) {
+          console.log('[useAIChat] Transitioning state from', chatState, 'to', next);
           onStateChange(next as ChatState);
         }
       } else {
+        console.log('[useAIChat] No directive found, using fallback logic');
+        
         // Fallback: legacy state detection
         // Extract setup statements if we're in creating-statements state
-        if (chatState === 'creating-statements' || data.response.includes('Even though')) {
-          const setupStatements = extractSetupStatements(data.response);
+        if (chatState === 'creating-statements' || visibleContent.includes('Even though')) {
+          const setupStatements = extractSetupStatements(visibleContent);
           if (setupStatements.length > 0) {
+            console.log('[useAIChat] Extracted setup statements (fallback):', setupStatements);
             updatedContext.setupStatements = setupStatements;
             setSessionContext(updatedContext);
             onSessionUpdate(updatedContext);
           }
         }
 
-        // Handle state transitions based on AI response and current state
-        const nextState = determineNextState(chatState, data.response);
+        // Handle state transitions based on AI response and current state (use visibleContent)
+        const nextState = determineNextState(chatState, visibleContent);
         if (nextState && nextState !== chatState) {
+          console.log('[useAIChat] Fallback state transition from', chatState, 'to', nextState);
           onStateChange(nextState);
         }
       }

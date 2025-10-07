@@ -30,6 +30,8 @@ interface TappingGuideProps {
 }
 
 const TappingGuide = ({ setupStatements, statementOrder, onComplete, onPointChange }: TappingGuideProps) => {
+  console.log('[TappingGuide] Rendered with:', { setupStatements, statementOrder });
+  
   const [currentPoint, setCurrentPoint] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(5);
