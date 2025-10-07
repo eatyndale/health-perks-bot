@@ -260,9 +260,8 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       } else {
         console.log('[useAIChat] No directive found, using fallback logic');
         
-        // Fallback: legacy state detection
-        // Extract setup statements if we're in creating-statements state
-        if (chatState === 'creating-statements' || visibleContent.includes('Even though')) {
+        // Fallback: Extract setup statements if present in response
+        if (visibleContent.includes('Even though')) {
           const setupStatements = extractSetupStatements(visibleContent);
           if (setupStatements.length > 0) {
             console.log('[useAIChat] Extracted setup statements (fallback):', setupStatements);
@@ -356,38 +355,13 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
         break;
         
       case 'gathering-intensity':
-        console.log('[determineNextState] Transition: gathering-intensity → setup-statement-1');
-        return 'setup-statement-1';
-        
-      case 'setup-statement-1':
-        if (response.includes('repeat it') || 
-            response.includes('tapping the side') ||
-            response.includes('karate chop')) {
-          console.log('[determineNextState] Transition: setup-statement-1 → setup-statement-2');
-          return 'setup-statement-2';
-        }
-        break;
-        
-      case 'setup-statement-2':
-        if (response.includes('repeat it') || 
-            response.includes('tapping the side') ||
-            response.includes('karate chop')) {
-          console.log('[determineNextState] Transition: setup-statement-2 → setup-statement-3');
-          return 'setup-statement-3';
-        }
-        break;
-        
-      case 'setup-statement-3':
-        // CRITICAL: This should transition to tapping-point with statements
-        if (response.includes('move through the tapping points') || 
-            response.includes('tapping points') ||
-            response.includes('top of the head')) {
-          console.log('[determineNextState] Transition: setup-statement-3 → tapping-point');
-          console.log('[determineNextState] ⚠️ WARNING: Using fallback - directive should have handled this!');
+        if (response.includes('tapping') || response.includes('visual guide') || response.includes('follow along')) {
+          console.log('[useAIChat] Detected tapping transition, moving to tapping-point');
           return 'tapping-point';
         }
-        break;
-        
+        console.log('[useAIChat] ⚠️ Fallback: assuming transition to tapping-point');
+        return 'tapping-point';
+
       case 'tapping-point':
         if (currentTappingPoint < 7) {
           console.log('[determineNextState] Continue tapping-point, current point:', currentTappingPoint);
@@ -409,8 +383,8 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       case 'post-tapping':
         // Check if intensity is still high
         if (sessionContext.currentIntensity && sessionContext.currentIntensity > 3) {
-          console.log('[determineNextState] High intensity, restarting: post-tapping → setup-statement-1');
-          return 'setup-statement-1';
+          console.log('[determineNextState] High intensity, restarting: post-tapping → tapping-point');
+          return 'tapping-point';
         }
         if (response.includes('amazing work') || 
             response.includes('meditation library') ||

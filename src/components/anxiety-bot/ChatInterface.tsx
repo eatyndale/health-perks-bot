@@ -141,7 +141,7 @@ const ChatInterface = ({
   };
 
   const renderInput = () => {
-    if (isTapping || chatState === 'creating-statements' || chatState === 'advice' || chatState === 'complete') return null;
+    if (isTapping || chatState === 'advice' || chatState === 'complete') return null;
 
     switch (chatState) {
       case 'initial':
@@ -234,7 +234,7 @@ const ChatInterface = ({
         <div className="flex-shrink-0 mt-4 pt-4 border-t">
           <div className="space-y-3">
             {renderInput()}
-            {!isTapping && chatState !== 'creating-statements' && (
+            {!isTapping && (
               <div className="flex justify-end">
                 <Button 
                   onClick={onSubmit} 

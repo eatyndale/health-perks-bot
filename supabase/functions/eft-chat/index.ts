@@ -234,40 +234,29 @@ CURRENT STAGE GUIDANCE:`;
 - Acknowledge their response and prepare for intensity rating`;
         break;
       case 'gathering-intensity':
-        systemPrompt += `
-- Acknowledge the body location: "OK, so you feel that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'}."
-- Ask them to rate the intensity: "On a scale of 0 to 10, with 0 being no intensity and 10 being extreme intensity, how would you rate that feeling right now?"
-- Wait for their rating before proceeding to setup statements`;
-        break;
-      case 'creating-statements':
-        systemPrompt += `
-- Create EXACTLY 3 setup statements using their words for [emotion], [body location], and [problem]
-- Use varied language patterns:
-  "Even though I feel this [emotion] in my [body location] because [problem], I'd like to be at peace"
-  "I feel [emotion] in my [body location], [problem context], but I'd like to relax now"  
-  "This [emotion] in my [body location], [problem], but I want to let it go"
-- ONLY provide the 3 setup statements, nothing else
-- DO NOT mention tapping points or sequences - that comes next
-- End with: "Choose one of these statements that resonates with you most."`;
-        break;
-      case 'setup-statement-1':
-        systemPrompt += `
-- Present the FIRST setup statement using their exact words: "Even though I feel this [emotion] in my [body location] because [problem], I'd like to be at peace"
-- Ask them to repeat it while tapping the side of their hand
-- Wait for confirmation before moving to next statement
-- Keep it simple and focused on just this one statement`;
-        break;
-      case 'setup-statement-2':
-        systemPrompt += `
-- Present the SECOND setup statement: "I feel [emotion] in my [body location], [problem], but I'd like to relax now"
-- Ask them to repeat it while tapping the side of their hand
-- Wait for confirmation before moving to next statement`;
-        break;
-      case 'setup-statement-3':
-        systemPrompt += `
-- Present the THIRD setup statement: "This [emotion] in my [body location], [problem], but I want to let it go"
-- Ask them to repeat it while tapping the side of their hand
-- After confirmation, say: "Great! Now we'll move through the tapping points one by one."`;
+        systemPrompt += `${basePrompt}
+
+**CURRENT STATE: gathering-intensity**
+
+The user has told you their feeling, the body location, and you've just received their INTENSITY rating (0-10).
+
+**YOUR TASK:**
+1. Acknowledge their intensity rating warmly
+2. Internally generate 3 setup statements using their exact words about their feeling and location (DO NOT display these in chat)
+3. Immediately emit directive to transition to tapping-point at point 0, including the setup_statements array and statement_order
+4. Say something like: "Perfect! Now let's begin the tapping sequence. Follow along with the visual guide on screen."
+
+**SETUP STATEMENTS (generate internally, include in directive):**
+- Statement 1: "Even though I feel this [their exact feeling] in my [their exact location], I deeply and completely accept myself"
+- Statement 2: "I feel [feeling] in my [location], and I choose to relax"  
+- Statement 3: "This [feeling] in my [location], and I'm ready to let it go"
+
+**CRITICAL:** Setup statements should NEVER appear as text in your chat response. They go directly in the directive and will appear in the visual tapping UI.
+
+**EXAMPLE DIRECTIVE:**
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this sadness in my chest, I deeply and completely accept myself","I feel sadness in my chest, and I choose to relax","This sadness in my chest, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0,"collect":null,"notes":"starting first round"}>>
+
+**REMEMBER:** After this, the user will see the visual tapping guide with the setup statements. Keep your response brief and encouraging.`;
         break;
       case 'tapping-point':
         systemPrompt += `

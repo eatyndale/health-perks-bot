@@ -211,7 +211,7 @@ const AnxietyBot = () => {
       addMessage('bot', `I understand you're feeling ${session.feeling} in your ${session.bodyLocation} at a ${intensity}/10 intensity. Let's work through this together with some tapping.`);
       addMessage('system', 'setup-statements');
       
-      setChatState('creating-statements');
+      setChatState('tapping-point');
     } catch (error) {
       // Fallback to local generation if API fails
       const statements = generateSetupStatements(session.problem, session.feeling, session.bodyLocation);
@@ -229,7 +229,7 @@ const AnxietyBot = () => {
       addMessage('bot', `I understand you're feeling ${session.feeling} in your ${session.bodyLocation} at a ${intensity}/10 intensity. Let's work through this together with some tapping.`);
       addMessage('system', 'setup-statements');
       
-      setChatState('creating-statements');
+      setChatState('tapping-point');
     }
   };
 
@@ -293,7 +293,7 @@ const AnxietyBot = () => {
       
       addMessage('bot', `Great progress! Your intensity has reduced from ${session.initialIntensity} to ${newIntensity}. Let's do another round of tapping with updated statements:`);
       addMessage('system', 'setup-statements');
-      setChatState('creating-statements');
+      setChatState('tapping-point');
       setSelectedSetupStatement(null);
     }
   };

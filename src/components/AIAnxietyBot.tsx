@@ -153,7 +153,7 @@ const AIAnxietyBot = () => {
   const handleSetupStatementSelect = async (index: number) => {
     setSelectedSetupStatement(index);
     const statement = sessionContext.setupStatements?.[index] || "Selected setup statement";
-    await sendMessage(`I choose: "${statement}"`, 'creating-statements');
+    await sendMessage(`I choose: "${statement}"`, 'tapping-point');
     setChatState('tapping-point');
     setIsTapping(true);
     setCurrentTappingPoint(0);
@@ -196,24 +196,6 @@ const AIAnxietyBot = () => {
       );
     }
 
-    // Progressive setup statement states
-    if (chatState === 'setup-statement-1' || chatState === 'setup-statement-2' || chatState === 'setup-statement-3') {
-      return (
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            Setup Statement {chatState.split('-')[2]} of 3
-          </div>
-          <ChatInput
-            chatState={chatState}
-            currentInput={currentInput}
-            onInputChange={setCurrentInput}
-            onSubmit={handleSubmit}
-            onKeyPress={handleKeyPress}
-            isLoading={isLoading}
-          />
-        </div>
-      );
-    }
 
     // Progressive tapping point state - render TappingGuide
     if (chatState === 'tapping-point') {
@@ -297,16 +279,6 @@ const AIAnxietyBot = () => {
       );
     }
 
-    // Legacy creating statements (for backward compatibility)
-    if (chatState === 'creating-statements') {
-      return (
-        <SetupStatements
-          statements={sessionContext.setupStatements || []}
-          selectedIndex={selectedSetupStatement}
-          onSelect={handleSetupStatementSelect}
-        />
-      );
-    }
 
     if (chatState === 'advice' || chatState === 'complete') {
       return (

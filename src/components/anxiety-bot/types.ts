@@ -1,5 +1,5 @@
 
-export type ChatState = 'questionnaire' | 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-intensity' | 'creating-statements' | 'setup-statement-1' | 'setup-statement-2' | 'setup-statement-3' | 'tapping-point' | 'tapping-breathing' | 'post-tapping' | 'advice' | 'complete';
+export type ChatState = 'questionnaire' | 'initial' | 'gathering-feeling' | 'gathering-location' | 'gathering-intensity' | 'tapping-point' | 'tapping-breathing' | 'post-tapping' | 'advice' | 'complete';
 
 export interface QuestionnaireResponse {
   question: number;
