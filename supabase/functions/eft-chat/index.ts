@@ -270,34 +270,7 @@ CRITICAL RULES:
 - NEVER combine multiple steps in one response
 - Current step: ${chatState}
 - Wait for user response before moving to next step
-- Keep responses short and focused on current step only
-
-MACHINE DIRECTIVE (MANDATORY):
-- At the VERY END of every response, output ONE line in EXACTLY this format:
-<<DIRECTIVE {"next_state":"<state>","tapping_point":<int_or_null>,"collect":"<field_or_null>","reminder":"<short_or_empty>","notes":""}>gt;
-
-- The directive must be valid JSON inside the chevrons. No extra lines. No code fences.
-- States you may choose: ["initial","gathering-feeling","gathering-location","gathering-intensity","creating-statements","setup-statement-1","setup-statement-2","setup-statement-3","tapping-point","tapping-breathing","post-tapping","advice","complete"]
-- If collecting intensity, set "collect":"intensity"
-- If collecting body location, set "collect":"body_location"
-- If collecting feeling/emotion, set "collect":"feeling"
-- If guiding a tapping point, set "next_state":"tapping-point" and "tapping_point" to 0..7 and include a short "reminder"
-
-DIRECTIVE EXAMPLES FOR EACH STATE:
-- initial → gathering-feeling: <<DIRECTIVE {"next_state":"gathering-feeling","tapping_point":null,"collect":"feeling","reminder":"","notes":""}>>
-- gathering-feeling → gathering-location: <<DIRECTIVE {"next_state":"gathering-location","tapping_point":null,"collect":"body_location","reminder":"","notes":""}>>
-- gathering-location → gathering-intensity: <<DIRECTIVE {"next_state":"gathering-intensity","tapping_point":null,"collect":"intensity","reminder":"","notes":""}>>
-- gathering-intensity → setup-statement-1: <<DIRECTIVE {"next_state":"setup-statement-1","tapping_point":null,"collect":null,"reminder":"","notes":""}>>
-- setup-statement-1 → setup-statement-2: <<DIRECTIVE {"next_state":"setup-statement-2","tapping_point":null,"collect":null,"reminder":"","notes":""}>>
-- setup-statement-2 → setup-statement-3: <<DIRECTIVE {"next_state":"setup-statement-3","tapping_point":null,"collect":null,"reminder":"","notes":""}>>
-- setup-statement-3 → tapping-point (start): <<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"collect":null,"reminder":"This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}","notes":""}>>
-- tapping-point (progress): For point k (0-6), use: <<DIRECTIVE {"next_state":"tapping-point","tapping_point":${currentTappingPoint + 1},"collect":null,"reminder":"This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}","notes":""}>>
-- tapping-point (last point 7) → breathing: <<DIRECTIVE {"next_state":"tapping-breathing","tapping_point":null,"collect":"intensity","reminder":"","notes":""}>>
-- tapping-breathing → post-tapping: <<DIRECTIVE {"next_state":"post-tapping","tapping_point":null,"collect":"intensity","reminder":"","notes":""}>>
-- post-tapping (intensity >3) → setup-statement-1: <<DIRECTIVE {"next_state":"setup-statement-1","tapping_point":null,"collect":null,"reminder":"","notes":"Another round"}>>
-- post-tapping (intensity <=3) → advice: <<DIRECTIVE {"next_state":"advice","tapping_point":null,"collect":null,"reminder":"","notes":"Session complete"}>>
-- advice → complete: <<DIRECTIVE {"next_state":"complete","tapping_point":null,"collect":null,"reminder":"","notes":""}>>
-- crisis detected → complete: <<DIRECTIVE {"next_state":"complete","tapping_point":null,"collect":null,"reminder":"","notes":"Crisis support"}>>` },
+- Keep responses short and focused on current step only` },
       // Enhanced conversation history with more context
       ...conversationHistory.slice(-20).map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',

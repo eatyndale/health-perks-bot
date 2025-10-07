@@ -42,27 +42,6 @@ const extractSetupStatements = (response: string): string[] => {
   return statements;
 };
 
-// Helper function to parse AI directive
-const DIRECTIVE_RE = /<<DIRECTIVE\s+({.*?})>>\s*$/s;
-interface AIDirective {
-  next_state: ChatState;
-  tapping_point: number | null;
-  collect: 'feeling' | 'body_location' | 'intensity' | null;
-  reminder: string;
-  notes: string;
-}
-
-function parseDirective(text: string): AIDirective | null {
-  const match = text.match(DIRECTIVE_RE);
-  if (!match) return null;
-  try {
-    return JSON.parse(match[1]) as AIDirective;
-  } catch {
-    console.error('Failed to parse directive:', match[1]);
-    return null;
-  }
-}
-
 export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, onTypoCorrection }: UseAIChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -196,15 +175,11 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
 
       if (error) throw error;
 
-      // Parse directive from AI response
-      const directive = parseDirective(data.response);
-      const visibleContent = data.response.replace(DIRECTIVE_RE, '').trim();
-
-      // Add AI response (without directive)
+      // Add AI response
       const aiMsg: Message = {
         id: `ai-${Date.now()}`,
         type: 'bot',
-        content: visibleContent,
+        content: data.response,
         timestamp: new Date(),
         sessionId: currentChatSession
       };
@@ -213,47 +188,20 @@ export const useAIChat = ({ onStateChange, onSessionUpdate, onCrisisDetected, on
       setMessages(finalMessages);
       setConversationHistory(finalMessages);
 
-      // Apply directive if present
-      if (directive) {
-        console.log('Applying directive:', directive);
-        
-        // Update tapping point if specified
-        if (directive.next_state === 'tapping-point' && typeof directive.tapping_point === 'number') {
-          setCurrentTappingPoint(directive.tapping_point);
-          
-          // Update reminder phrase for this tapping point
-          if (directive.reminder) {
-            const reminders = updatedContext.reminderPhrases || [];
-            reminders[directive.tapping_point] = directive.reminder;
-            updatedContext.reminderPhrases = reminders;
-            setSessionContext(updatedContext);
-            onSessionUpdate(updatedContext);
-          }
+      // Extract setup statements if we're in creating-statements state
+      if (chatState === 'creating-statements' || data.response.includes('Even though')) {
+        const setupStatements = extractSetupStatements(data.response);
+        if (setupStatements.length > 0) {
+          updatedContext.setupStatements = setupStatements;
+          setSessionContext(updatedContext);
+          onSessionUpdate(updatedContext);
         }
-        
-        // Transition to next state if different
-        if (directive.next_state && directive.next_state !== chatState) {
-          onStateChange(directive.next_state);
-        }
-      } else {
-        // Fallback to legacy state detection if no directive
-        console.warn('No directive found, using fallback detection');
-        
-        // Extract setup statements if we're in creating-statements state
-        if (chatState === 'creating-statements' || data.response.includes('Even though')) {
-          const setupStatements = extractSetupStatements(data.response);
-          if (setupStatements.length > 0) {
-            updatedContext.setupStatements = setupStatements;
-            setSessionContext(updatedContext);
-            onSessionUpdate(updatedContext);
-          }
-        }
+      }
 
-        // Handle state transitions based on AI response and current state
-        const nextState = determineNextState(chatState, data.response);
-        if (nextState && nextState !== chatState) {
-          onStateChange(nextState);
-        }
+      // Handle state transitions based on AI response and current state
+      const nextState = determineNextState(chatState, data.response);
+      if (nextState && nextState !== chatState) {
+        onStateChange(nextState);
       }
 
       // Update chat session in database
