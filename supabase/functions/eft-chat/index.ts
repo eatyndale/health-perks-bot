@@ -226,10 +226,18 @@ CURRENT STAGE GUIDANCE:`;
         break;
       case 'gathering-location':
         systemPrompt += `
-- Say: "Thank you for sharing that, ${userName}. I want you to focus on that ${sessionContext.feeling || 'feeling'} for a moment."
-- Ask: "Can you tell me where you feel it in your body?"
-- Common responses: chest, stomach, shoulders, throat, head
-- Acknowledge their response and prepare for intensity rating`;
+**CURRENT STATE: gathering-location**
+
+The user just told you where they feel it in their body.
+
+**YOUR RESPONSE:**
+"Thank you for sharing that, ${userName}. Now, on a scale of 0 to 10, where 0 is no intensity at all and 10 is the most intense it could possibly be, how intense is that ${sessionContext.feeling || 'feeling'} in your ${sessionContext.bodyLocation || 'body'} right now?"
+
+**THEN GENERATE THIS DIRECTIVE:**
+<<DIRECTIVE {"next_state":"gathering-intensity","collect":"intensity"}>>
+
+This will show the intensity slider UI to the user.
+`;
         break;
       case 'gathering-intensity':
         systemPrompt += `
@@ -237,23 +245,15 @@ CURRENT STAGE GUIDANCE:`;
 
 The user just provided their intensity rating (0-10).
 
-**YOUR RESPONSE (say exactly this):**
+**YOUR TEXT RESPONSE (copy this EXACTLY):**
 "Perfect! Now let's begin the tapping. Follow along with the visual guide."
 
-**THEN IMMEDIATELY:**
-Generate a directive with:
-- next_state: "tapping-point"
-- tapping_point: 0
-- setup_statements: [array of 3 statements using their EXACT words for feeling and location]
-  - Statement 1: "Even though I feel this [their feeling] in my [location], I deeply and completely accept myself"
-  - Statement 2: "I feel [feeling] in my [location], and I choose to relax"
-  - Statement 3: "This [feeling] in my [location], and I'm ready to let it go"
-- statement_order: [0,1,2,0,1,2,1,0]
+**CRITICAL: DO NOT write out the setup statements in your text response. DO NOT say "Even though I..." or any variation. The statements are ONLY for the directive JSON below.**
 
-**DO NOT MENTION THE STATEMENTS IN YOUR TEXT RESPONSE. THEY ONLY GO IN THE DIRECTIVE.**
+**THEN GENERATE DIRECTIVE (statements go HERE, not in text):**
+<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, I deeply and completely accept myself","I feel ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I choose to relax","This ${sessionContext.feeling || 'feeling'} in my ${sessionContext.bodyLocation || 'body'}, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
 
-Example directive:
-<<DIRECTIVE {"next_state":"tapping-point","tapping_point":0,"setup_statements":["Even though I feel this sadness in my chest, I deeply and completely accept myself","I feel sadness in my chest, and I choose to relax","This sadness in my chest, and I'm ready to let it go"],"statement_order":[0,1,2,0,1,2,1,0],"say_index":0}>>
+The setup statements will appear in the TappingGuide UI component, NOT in your chat response.
 `;
         break;
       case 'tapping-point':
